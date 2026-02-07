@@ -16,6 +16,8 @@ final class SearchViewModel: ObservableObject {
     @Published var isRunningChinaAccessibilitySweep: Bool
     @Published var chinaSweepIncludesAllProviders: Bool
     @Published var pendingLoginOffer: FlightOffer?
+    @Published var resultStatusFilter: ResultStatusFilter
+    @Published var resultMaxOffersPerRoute: Int
 
     @Published var isSearching = false
     @Published var progressByRoute: [String: SearchProgress] = [:]
@@ -53,6 +55,8 @@ final class SearchViewModel: ObservableObject {
         self.isRunningChinaAccessibilitySweep = false
         self.chinaSweepIncludesAllProviders = false
         self.pendingLoginOffer = nil
+        self.resultStatusFilter = .all
+        self.resultMaxOffersPerRoute = 15
         self.watchlistRecheckSummary = nil
         restoreDefaultsIfAvailable()
         restartAutoWatchlistRecheckTask()
@@ -144,6 +148,34 @@ final class SearchViewModel: ObservableObject {
                 await self.refreshChinaAccessibilitySnapshot()
             }
         }
+    }
+
+    func setResultStatusFilter(_ filter: ResultStatusFilter) {
+        guard resultStatusFilter != filter else { return }
+        resultStatusFilter = filter
+    }
+
+    func setResultMaxOffersPerRoute(_ count: Int) {
+        let normalized = normalizedResultMaxOffersPerRoute(count)
+        guard resultMaxOffersPerRoute != normalized else { return }
+        resultMaxOffersPerRoute = normalized
+    }
+
+    func displayOffers(for routeResult: RouteSearchResult) -> [FlightOffer] {
+        let filtered = routeResult.offers.filter { offer in
+            switch resultStatusFilter {
+            case .all:
+                return true
+            case .priced:
+                return offer.status == .priced
+            case .actionRequired:
+                return offer.status == .handoffRequired || offer.status == .loginRequired
+            case .unavailable:
+                return offer.status == .unavailable
+            }
+        }
+
+        return Array(filtered.prefix(resultMaxOffersPerRoute))
     }
 
     func handleOfferOpenRequest(_ offer: FlightOffer) {
@@ -605,6 +637,10 @@ final class SearchViewModel: ObservableObject {
         min(max(minutes, 5), 180)
     }
 
+    private func normalizedResultMaxOffersPerRoute(_ count: Int) -> Int {
+        min(max(count, 5), 25)
+    }
+
     private func buildChinaAccessibilitySummary(_ report: ChinaAccessibilityPlanner.ProbeReport) -> String {
         if report.probedCount == 0 {
             return "No providers matched the enabled provider types."
@@ -650,4 +686,26 @@ private struct WatchlistRouteDescriptor {
 private enum WatchlistRecheckTrigger {
     case manual
     case scheduled
+}
+
+enum ResultStatusFilter: String, CaseIterable, Identifiable {
+    case all
+    case priced
+    case actionRequired
+    case unavailable
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all:
+            return "All"
+        case .priced:
+            return "Priced"
+        case .actionRequired:
+            return "Action"
+        case .unavailable:
+            return "Unavailable"
+        }
+    }
 }

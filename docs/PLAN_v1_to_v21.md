@@ -40,3 +40,4 @@
 5. China accessibility diagnostics sweep + ranked snapshot panel in UI (deterministic, no AI): complete
 6. China sweep scope control for full-catalog probing + persisted preference: complete
 7. Login-required offer handoff prompt with explicit user confirmation flow: complete
+8. Results panel filter controls (status + row cap) with deterministic view-model behavior: complete

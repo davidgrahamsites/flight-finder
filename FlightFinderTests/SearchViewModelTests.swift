@@ -750,6 +750,55 @@ struct SearchViewModelTests {
         #expect(viewModel.pendingLoginOffer == nil)
         #expect(opener.openedURLs == [URL(string: "https://example.com/deal")!])
     }
+
+    @Test("Results display offers can filter action-required statuses and cap rows")
+    func displayOffersFilterAndCap() {
+        let store = InMemorySearchPreferencesStore()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        let route = RouteRequest(origin: "SFO", destination: "PVG", departureDate: Date(timeIntervalSince1970: 1_700_000_000))
+        let routeResult = RouteSearchResult(
+            route: route,
+            offers: [
+                makeOffer(status: .priced, deepLink: URL(string: "https://example.com/priced")!),
+                makeOffer(status: .handoffRequired, deepLink: URL(string: "https://example.com/handoff-1")!),
+                makeOffer(status: .loginRequired, deepLink: URL(string: "https://example.com/login")!),
+                makeOffer(status: .unavailable, deepLink: URL(string: "https://example.com/unavailable")!),
+                makeOffer(status: .handoffRequired, deepLink: URL(string: "https://example.com/handoff-2")!),
+                makeOffer(status: .loginRequired, deepLink: URL(string: "https://example.com/login-2")!),
+                makeOffer(status: .handoffRequired, deepLink: URL(string: "https://example.com/handoff-3")!),
+                makeOffer(status: .loginRequired, deepLink: URL(string: "https://example.com/login-3")!)
+            ],
+            startedAt: Date(timeIntervalSince1970: 1_700_000_010),
+            endedAt: Date(timeIntervalSince1970: 1_700_000_020)
+        )
+
+        viewModel.setResultStatusFilter(.actionRequired)
+        viewModel.setResultMaxOffersPerRoute(5)
+        let filtered = viewModel.displayOffers(for: routeResult)
+
+        #expect(filtered.count == 5)
+        #expect(filtered[0].status == .handoffRequired)
+        #expect(filtered[1].status == .loginRequired)
+    }
+
+    @Test("Result max offers per route is clamped to supported values")
+    func resultMaxOffersClamped() {
+        let store = InMemorySearchPreferencesStore()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        viewModel.setResultMaxOffersPerRoute(1)
+        #expect(viewModel.resultMaxOffersPerRoute == 5)
+
+        viewModel.setResultMaxOffersPerRoute(999)
+        #expect(viewModel.resultMaxOffersPerRoute == 25)
+    }
 }
 
 private final class InMemorySearchPreferencesStore: SearchPreferencesStore {

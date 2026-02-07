@@ -667,6 +667,46 @@ struct FlightFinderView: View {
                 if let session = viewModel.sessionResult {
                     SessionObservabilityCard(session: session)
 
+                    PosterSection(
+                        title: "Results View",
+                        subtitle: "Filter by offer status and control row density per route.",
+                        background: .white
+                    ) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Picker(
+                                "Status Filter",
+                                selection: Binding(
+                                    get: { viewModel.resultStatusFilter },
+                                    set: { viewModel.setResultStatusFilter($0) }
+                                )
+                            ) {
+                                ForEach(ResultStatusFilter.allCases) { filter in
+                                    Text(filter.title).tag(filter)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+
+                            HStack(spacing: 8) {
+                                Text("Rows Per Route")
+                                    .font(outfit(size: 12, weight: .semibold))
+                                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
+
+                                Picker(
+                                    "Rows Per Route",
+                                    selection: Binding(
+                                        get: { viewModel.resultMaxOffersPerRoute },
+                                        set: { viewModel.setResultMaxOffersPerRoute($0) }
+                                    )
+                                ) {
+                                    ForEach([5, 10, 15, 20, 25], id: \.self) { count in
+                                        Text("\(count)").tag(count)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                            }
+                        }
+                    }
+
                     if !session.warnings.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(session.warnings, id: \.self) { warning in
@@ -690,8 +730,10 @@ struct FlightFinderView: View {
                     }
 
                     ForEach(session.routes) { routeResult in
+                        let displayOffers = viewModel.displayOffers(for: routeResult)
                         RouteResultCard(
                             routeResult: routeResult,
+                            offers: displayOffers,
                             onOfferOpen: { viewModel.handleOfferOpenRequest($0) }
                         )
                     }
@@ -1044,6 +1086,7 @@ private struct ChinaAccessibilityRow: View {
 
 private struct RouteResultCard: View {
     let routeResult: RouteSearchResult
+    let offers: [FlightOffer]
     let onOfferOpen: (FlightOffer) -> Void
 
     private var title: String {
@@ -1082,13 +1125,13 @@ private struct RouteResultCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
 
-            if routeResult.offers.isEmpty {
-                Text("No offers found.")
+            if offers.isEmpty {
+                Text("No offers match the current filter.")
                     .font(Font.custom("Outfit", size: 13).weight(.regular))
                     .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
             } else {
                 VStack(spacing: 8) {
-                    ForEach(routeResult.offers.prefix(15)) { offer in
+                    ForEach(offers) { offer in
                         OfferRow(
                             offer: offer,
                             onOpen: { onOfferOpen(offer) }
