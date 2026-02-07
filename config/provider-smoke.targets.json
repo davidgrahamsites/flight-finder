@@ -1,0 +1,18 @@
+{
+  "global": [
+    { "id": "google-flights", "name": "Google Flights", "url": "https://www.google.com/travel/flights" },
+    { "id": "skyscanner", "name": "Skyscanner", "url": "https://www.skyscanner.com" },
+    { "id": "kayak", "name": "KAYAK", "url": "https://www.kayak.com/flights" },
+    { "id": "momondo", "name": "momondo", "url": "https://www.momondo.com" },
+    { "id": "trip", "name": "Trip.com", "url": "https://us.trip.com/flights" },
+    { "id": "expedia", "name": "Expedia", "url": "https://www.expedia.com/Flights" }
+  ],
+  "china": [
+    { "id": "ctrip", "name": "Ctrip", "url": "https://www.ctrip.com/flights" },
+    { "id": "trip", "name": "Trip.com", "url": "https://us.trip.com/flights" },
+    { "id": "qunar", "name": "Qunar", "url": "https://www.qunar.com" },
+    { "id": "fliggy", "name": "Fliggy", "url": "https://www.fliggy.com" },
+    { "id": "agoda", "name": "Agoda", "url": "https://www.agoda.com/flights" },
+    { "id": "skyscanner", "name": "Skyscanner", "url": "https://www.skyscanner.com" }
+  ]
+}

@@ -36,6 +36,15 @@ xcodebuild -project FlightFinder.xcodeproj \
   test
 ```
 
+## Skills Integration
+
+This repo includes skill-oriented tooling aligned to the VoltAgent skills catalog:
+
+- `scripts/install_recommended_skills.sh` installs the recommended skills set.
+- `scripts/validate_with_skills.sh` runs build/test verification plus optional browser checks.
+- `scripts/provider_smoke_playwright.mjs` performs provider reachability smoke tests.
+- `docs/SKILLS_PLAYBOOK.md` explains skill usage and workflow.
+
 ## Notes
 
 - This build disables code signing for local development in this environment.
