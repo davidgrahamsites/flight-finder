@@ -37,3 +37,4 @@
 1. Added hover-lift interaction feedback for sections and result/watchlist rows (no shadows, scale-only).
 2. Added results quick-stats strip (mode, best fare, priced count, alerts) for at-a-glance scanning.
 3. Updated search CTA copy to reflect selected ranking mode.
+4. Added browser UI track (`web/client`) using the same flat-poster token language and responsive two-pane adaptation.

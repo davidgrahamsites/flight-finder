@@ -57,6 +57,30 @@ xcodebuild -project FlightFinder.xcodeproj \
   test
 ```
 
+## Browser Version (Web)
+
+A web/browser release now lives in `web/`:
+
+- React frontend + Express API
+- Localhost-first workflow
+- Webhost-ready single-service deployment
+- China accessibility probe mode with non-AI learning store
+- Affiliate parameter support for supported providers via env vars
+
+Local run:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Web release + monetization docs:
+
+- `web/README.md`
+- `docs/WEB_RELEASE.md`
+- `docs/MONETIZATION.md`
+
 ## Release Packaging
 
 Build an unsigned macOS release bundle (app + zip + sha256):

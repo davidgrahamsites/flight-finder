@@ -3,3 +3,6 @@
 .derivedData/
 .derivedData-release/
 build/
+web/node_modules/
+web/client/dist/
+web/server/data/provider-access-stats.json

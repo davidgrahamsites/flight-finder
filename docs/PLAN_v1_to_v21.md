@@ -44,3 +44,4 @@
 9. Skills catalog integration expanded to live Awesome Agent Skills parser + scoped installers (official/all): complete
 10. Ranking mode selection (`Best`, `Cheapest`, `Fastest`) with backward-compatible saved-options decoding: complete
 11. Optional polish/release phase: interaction polish + versioned macOS release bundling workflow + release runbook: complete
+12. Browser-first release track (`web/`) with React+Express runtime, China probe learning mode, and deployment/monetization docs: complete
