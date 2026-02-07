@@ -1,6 +1,6 @@
 import Foundation
 
-struct RouteInputState: Identifiable, Hashable {
+struct RouteInputState: Identifiable, Codable, Hashable {
     var id: UUID
     var origin: String
     var destination: String

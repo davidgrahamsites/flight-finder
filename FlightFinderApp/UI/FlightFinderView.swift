@@ -6,16 +6,23 @@ struct FlightFinderView: View {
 
     var body: some View {
         NavigationStack {
-            HStack(spacing: 0) {
-                configurationPane
-                    .frame(minWidth: 470, maxWidth: 560)
-                    .background(Color(nsColor: .windowBackgroundColor))
+            ZStack {
+                FlightFinderTheme.background
+                    .ignoresSafeArea()
 
-                Divider()
+                HStack(spacing: 0) {
+                    configurationPane
+                        .frame(minWidth: 520, idealWidth: 560, maxWidth: 620)
+                        .background(FlightFinderTheme.background)
 
-                resultsPane
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(nsColor: .textBackgroundColor))
+                    Rectangle()
+                        .fill(FlightFinderTheme.border)
+                        .frame(width: 2)
+
+                    resultsPane
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(FlightFinderTheme.muted)
+                }
             }
             .navigationTitle("FlightFinder")
         }
@@ -23,8 +30,9 @@ struct FlightFinderView: View {
 
     private var configurationPane: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
+            VStack(alignment: .leading, spacing: 14) {
+                heroSection
+                presetsSection
                 routesSection
                 searchOptionsSection
                 providerKindsSection
@@ -32,191 +40,351 @@ struct FlightFinderView: View {
             }
             .padding(20)
         }
+        .scrollIndicators(.hidden)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Agentic Flight Search")
-                .font(.title2.weight(.semibold))
-            Text("Compare airlines, metasearch, OTAs, and China portals for up to 3 routes in parallel.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+    private var heroSection: some View {
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(FlightFinderTheme.primary)
+
+            Circle()
+                .fill(.white.opacity(0.15))
+                .frame(width: 140, height: 140)
+                .offset(x: -28, y: -32)
+
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(.white.opacity(0.14))
+                .frame(width: 132, height: 132)
+                .rotationEffect(.degrees(20))
+                .offset(x: 332, y: -38)
+
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(FlightFinderTheme.secondary.opacity(0.22))
+                .frame(width: 112, height: 70)
+                .rotationEffect(.degrees(-10))
+                .offset(x: 280, y: 122)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("AGENTIC FLIGHT SEARCH")
+                    .font(outfit(size: 12, weight: .semibold))
+                    .tracking(1.8)
+                    .foregroundStyle(.white.opacity(0.95))
+
+                Text("Compare Airlines + Aggregators in One Run")
+                    .font(outfit(size: 30, weight: .black))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+
+                Text("Three simultaneous routes, one-way or round-trip, with bag options and China-aware source selection.")
+                    .font(outfit(size: 14, weight: .regular))
+                    .foregroundStyle(.white.opacity(0.92))
+                    .lineSpacing(2)
+
+                HStack(spacing: 10) {
+                    heroPill(text: "3 routes", tint: FlightFinderTheme.accent)
+                    heroPill(text: "No-shadow flat UI", tint: FlightFinderTheme.secondary)
+                    heroPill(text: "Live progress", tint: .white.opacity(0.2), textColor: .white)
+                }
+            }
+            .padding(22)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 255)
+    }
+
+    private func heroPill(text: String, tint: Color, textColor: Color = FlightFinderTheme.foreground) -> some View {
+        Text(text.uppercased())
+            .font(outfit(size: 11, weight: .semibold))
+            .tracking(0.8)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .background(tint)
+            .foregroundStyle(textColor)
+            .clipShape(RoundedRectangle(cornerRadius: 999, style: .continuous))
+    }
+
+    private var presetsSection: some View {
+        PosterSection(
+            title: "Search Presets",
+            subtitle: "One-tap route templates optimized for domestic and USA→PVG runs.",
+            background: FlightFinderTheme.muted
+        ) {
+            VStack(spacing: 10) {
+                ForEach(SearchPreset.allCases) { preset in
+                    Button {
+                        viewModel.applyPreset(preset)
+                    } label: {
+                        HStack(alignment: .top, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(preset.rawValue)
+                                    .font(outfit(size: 15, weight: .bold))
+                                Text(preset.subtitle)
+                                    .font(outfit(size: 12, weight: .regular))
+                                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
+                                    .lineLimit(2)
+                            }
+
+                            Spacer()
+
+                            if viewModel.selectedPreset == preset {
+                                Text("ACTIVE")
+                                    .font(outfit(size: 10, weight: .semibold))
+                                    .tracking(1.2)
+                                    .padding(.vertical, 5)
+                                    .padding(.horizontal, 8)
+                                    .background(FlightFinderTheme.primary)
+                                    .foregroundStyle(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 999, style: .continuous))
+                            }
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(viewModel.selectedPreset == preset ? FlightFinderTheme.primary.opacity(0.14) : .white)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(viewModel.selectedPreset == preset ? FlightFinderTheme.primary : FlightFinderTheme.border, lineWidth: 2)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isSearching)
+                }
+            }
         }
     }
 
     private var routesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Routes")
-                    .font(.headline)
-                Spacer()
-                Button("Add Route") {
-                    viewModel.addRoute()
+        PosterSection(
+            title: "Routes",
+            subtitle: "Configure up to three routes that will search in parallel.",
+            background: .white
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Configured: \(viewModel.routes.count)/3")
+                        .font(outfit(size: 12, weight: .semibold))
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
+
+                    Spacer()
+
+                    Button("Add Route") {
+                        viewModel.addRoute()
+                    }
+                    .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.primary))
+                    .disabled(viewModel.routes.count >= 3 || viewModel.isSearching)
                 }
-                .disabled(viewModel.routes.count >= 3 || viewModel.isSearching)
-            }
 
-            ForEach($viewModel.routes) { $route in
-                RouteInputCard(
-                    route: $route,
-                    tripType: viewModel.options.tripType,
-                    onRemove: { viewModel.removeRoute(id: route.id) },
-                    canRemove: viewModel.routes.count > 1,
-                    isLocked: viewModel.isSearching
-                )
+                ForEach($viewModel.routes) { $route in
+                    RouteInputCard(
+                        route: $route,
+                        tripType: viewModel.options.tripType,
+                        onRemove: { viewModel.removeRoute(id: route.id) },
+                        canRemove: viewModel.routes.count > 1,
+                        isLocked: viewModel.isSearching
+                    )
+                }
             }
-
-            Text("Simultaneous route limit: 3")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 
     private var searchOptionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Search Options")
-                .font(.headline)
+        PosterSection(
+            title: "Search Options",
+            subtitle: "Trip, cabin, passenger, and bag preferences applied across all enabled providers.",
+            background: Color(hex: 0xEFF6FF)
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Trip Type")
+                        .font(outfit(size: 12, weight: .semibold))
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
 
-            Picker("Trip Type", selection: $viewModel.options.tripType) {
-                ForEach(TripType.allCases) { trip in
-                    Text(trip.rawValue).tag(trip)
-                }
-            }
-            .pickerStyle(.segmented)
-            .disabled(viewModel.isSearching)
-
-            Picker("Site Access", selection: $viewModel.options.siteAccessMode) {
-                ForEach(SiteAccessMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .disabled(viewModel.isSearching)
-
-            if viewModel.options.siteAccessMode == .chinaAccessible {
-                Text("China mode probes and learns reachable sites over time, then prioritizes the most reliable set.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack {
-                Picker("Cabin", selection: $viewModel.options.cabinClass) {
-                    ForEach(CabinClass.allCases) { cabin in
-                        Text(cabin.rawValue).tag(cabin)
+                    Picker("Trip Type", selection: $viewModel.options.tripType) {
+                        ForEach(TripType.allCases) { trip in
+                            Text(trip.rawValue).tag(trip)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .tint(FlightFinderTheme.primary)
                 }
                 .disabled(viewModel.isSearching)
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Currency")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    TextField("USD", text: $viewModel.options.preferredCurrency)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 90)
-                        .disabled(viewModel.isSearching)
+                    Text("Site Access")
+                        .font(outfit(size: 12, weight: .semibold))
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
+
+                    Picker("Site Access", selection: $viewModel.options.siteAccessMode) {
+                        ForEach(SiteAccessMode.allCases) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(FlightFinderTheme.secondary)
                 }
-            }
-
-            HStack {
-                Stepper("Adults: \(viewModel.options.passengers.adults)", value: $viewModel.options.passengers.adults, in: 1...9)
-                Stepper("Children: \(viewModel.options.passengers.children)", value: $viewModel.options.passengers.children, in: 0...6)
-            }
-            .disabled(viewModel.isSearching)
-
-            HStack {
-                Stepper("Infants: \(viewModel.options.passengers.infants)", value: $viewModel.options.passengers.infants, in: 0...4)
-                Stepper("Checked Bags/Traveler: \(viewModel.options.bagPolicy.checkedBagsPerTraveler)", value: $viewModel.options.bagPolicy.checkedBagsPerTraveler, in: 0...3)
-            }
-            .disabled(viewModel.isSearching)
-
-            HStack {
-                Toggle("Carry-on Included", isOn: $viewModel.options.bagPolicy.carryOnIncluded)
-                Toggle("Nonstop Only", isOn: $viewModel.options.nonStopOnly)
-            }
-            .disabled(viewModel.isSearching)
-
-            HStack {
-                Picker("Max Stops", selection: Binding(
-                    get: { viewModel.options.maxStops ?? -1 },
-                    set: { viewModel.options.maxStops = $0 < 0 ? nil : $0 }
-                )) {
-                    Text("Any").tag(-1)
-                    Text("0").tag(0)
-                    Text("1").tag(1)
-                    Text("2").tag(2)
-                }
-                .frame(width: 120)
                 .disabled(viewModel.isSearching)
 
-                Stepper("Flexible Days: ±\(viewModel.options.flexibleDays)", value: $viewModel.options.flexibleDays, in: 0...7)
+                if viewModel.options.siteAccessMode == .chinaAccessible {
+                    Text("China mode probes accessibility and updates reliability scores over time without calling any AI model.")
+                        .font(outfit(size: 12, weight: .medium))
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(FlightFinderTheme.secondary.opacity(0.15))
+                        .foregroundStyle(FlightFinderTheme.foreground)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+
+                HStack(alignment: .top, spacing: 10) {
+                    LabeledPickerCard(title: "Cabin") {
+                        Picker("Cabin", selection: $viewModel.options.cabinClass) {
+                            ForEach(CabinClass.allCases) { cabin in
+                                Text(cabin.rawValue).tag(cabin)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                    }
                     .disabled(viewModel.isSearching)
+
+                    LabeledTextFieldCard(
+                        title: "Currency",
+                        text: $viewModel.options.preferredCurrency,
+                        placeholder: "USD",
+                        disabled: viewModel.isSearching
+                    )
+                }
+
+                HStack(spacing: 10) {
+                    Stepper("Adults: \(viewModel.options.passengers.adults)", value: $viewModel.options.passengers.adults, in: 1...9)
+                    Stepper("Children: \(viewModel.options.passengers.children)", value: $viewModel.options.passengers.children, in: 0...6)
+                }
+                .disabled(viewModel.isSearching)
+                .font(outfit(size: 13, weight: .medium))
+
+                HStack(spacing: 10) {
+                    Stepper("Infants: \(viewModel.options.passengers.infants)", value: $viewModel.options.passengers.infants, in: 0...4)
+                    Stepper("Checked Bags: \(viewModel.options.bagPolicy.checkedBagsPerTraveler)", value: $viewModel.options.bagPolicy.checkedBagsPerTraveler, in: 0...3)
+                }
+                .disabled(viewModel.isSearching)
+                .font(outfit(size: 13, weight: .medium))
+
+                HStack(spacing: 12) {
+                    Toggle("Carry-on Included", isOn: $viewModel.options.bagPolicy.carryOnIncluded)
+                    Toggle("Nonstop Only", isOn: $viewModel.options.nonStopOnly)
+                }
+                .disabled(viewModel.isSearching)
+                .font(outfit(size: 13, weight: .medium))
+
+                HStack(spacing: 12) {
+                    Picker(
+                        "Max Stops",
+                        selection: Binding(
+                            get: { viewModel.options.maxStops ?? -1 },
+                            set: { viewModel.options.maxStops = $0 < 0 ? nil : $0 }
+                        )
+                    ) {
+                        Text("Any").tag(-1)
+                        Text("0").tag(0)
+                        Text("1").tag(1)
+                        Text("2").tag(2)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 190)
+
+                    Stepper("Flexible Days: ±\(viewModel.options.flexibleDays)", value: $viewModel.options.flexibleDays, in: 0...7)
+                        .font(outfit(size: 13, weight: .medium))
+                }
+                .disabled(viewModel.isSearching)
             }
         }
     }
 
     private var providerKindsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Provider Types")
-                .font(.headline)
-
+        PosterSection(
+            title: "Provider Types",
+            subtitle: "Mix airline websites with metasearch, OTA, and China portal sources in the same run.",
+            background: Color(hex: 0xECFDF5)
+        ) {
             HStack(spacing: 8) {
                 ForEach(ProviderKind.allCases) { kind in
                     ToggleChip(
                         title: kind.rawValue,
                         isOn: viewModel.enabledKinds.contains(kind),
+                        tint: color(for: kind),
                         action: { viewModel.toggleKind(kind) }
                     )
                     .disabled(viewModel.isSearching)
                 }
             }
-
-            Text("Airline websites, metasearch engines, OTAs, and China-focused portals can all run in the same search.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 
     private var actionSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Button {
-                    Task {
-                        await viewModel.runSearch()
+        PosterSection(
+            title: "Run Search",
+            subtitle: "Launch a concurrent comparison and rank by value, reliability, and route fit.",
+            background: FlightFinderTheme.slate,
+            foreground: .white
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Button {
+                        Task {
+                            await viewModel.runSearch()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            if viewModel.isSearching {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(.white)
+                            }
+                            Text(viewModel.isSearching ? "Searching..." : "Find Best Flights")
+                                .font(outfit(size: 14, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
                     }
-                } label: {
-                    if viewModel.isSearching {
-                        ProgressView()
-                            .controlSize(.small)
-                            .frame(width: 18, height: 18)
-                        Text("Searching...")
-                    } else {
-                        Text("Find Best Flights")
+                    .buttonStyle(PrimaryPosterButtonStyle(color: FlightFinderTheme.primary))
+                    .disabled(viewModel.isSearching)
+
+                    Button("Save Defaults") {
+                        viewModel.saveDefaults()
                     }
+                    .buttonStyle(SecondaryPosterButtonStyle(background: .white.opacity(0.14), foreground: .white))
+                    .disabled(viewModel.isSearching)
+
+                    Button("Clear Results") {
+                        viewModel.resetResults()
+                    }
+                    .buttonStyle(SecondaryPosterButtonStyle(background: .white.opacity(0.14), foreground: .white))
+                    .disabled(viewModel.isSearching)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(viewModel.isSearching)
 
-                Button("Clear Results") {
-                    viewModel.resetResults()
+                if let error = viewModel.searchError {
+                    Text(error)
+                        .font(outfit(size: 12, weight: .medium))
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundStyle(.white)
+                        .background(Color.red.opacity(0.78))
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
-                .disabled(viewModel.isSearching)
-            }
 
-            if let error = viewModel.searchError {
-                Text(error)
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
-            }
-
-            if !viewModel.progressByRoute.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(viewModel.progressByRoute.values.sorted(by: { $0.routeKey < $1.routeKey }), id: \.routeKey) { progress in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("\(progress.routeKey) • \(progress.providerName)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            ProgressView(value: progress.fraction)
+                if !viewModel.progressByRoute.isEmpty {
+                    VStack(spacing: 8) {
+                        ForEach(viewModel.progressByRoute.values.sorted(by: { $0.routeKey < $1.routeKey }), id: \.routeKey) { progress in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("\(progress.routeKey) • \(progress.providerName)")
+                                    .font(outfit(size: 12, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.88))
+                                ProgressView(value: progress.fraction)
+                                    .tint(FlightFinderTheme.accent)
+                            }
+                            .padding(10)
+                            .background(.white.opacity(0.09))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
                     }
                 }
@@ -226,17 +394,51 @@ struct FlightFinderView: View {
 
     private var resultsPane: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Results")
-                    .font(.title3.weight(.semibold))
+            VStack(alignment: .leading, spacing: 14) {
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(FlightFinderTheme.secondary)
+
+                    Circle()
+                        .fill(.white.opacity(0.14))
+                        .frame(width: 160, height: 160)
+                        .offset(x: -30, y: -50)
+
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.white.opacity(0.18))
+                        .frame(width: 140, height: 90)
+                        .rotationEffect(.degrees(15))
+                        .offset(x: 540, y: -24)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("RESULTS")
+                            .font(outfit(size: 12, weight: .semibold))
+                            .tracking(1.5)
+                            .foregroundStyle(.white.opacity(0.94))
+
+                        Text(viewModel.sessionResult == nil ? "No search has been run yet" : "Best offers ranked and ready")
+                            .font(outfit(size: 28, weight: .black))
+                            .foregroundStyle(.white)
+
+                        Text("Open any offer to complete booking directly on the provider website.")
+                            .font(outfit(size: 13, weight: .regular))
+                            .foregroundStyle(.white.opacity(0.92))
+                    }
+                    .padding(20)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 190)
 
                 if let session = viewModel.sessionResult {
                     if !session.warnings.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(session.warnings, id: \.self) { warning in
                                 Text(warning)
-                                    .font(.caption)
-                                    .foregroundStyle(.orange)
+                                    .font(outfit(size: 12, weight: .medium))
+                                    .padding(8)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(FlightFinderTheme.accent.opacity(0.2))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
                         }
                     }
@@ -245,12 +447,175 @@ struct FlightFinderView: View {
                         RouteResultCard(routeResult: routeResult)
                     }
                 } else {
-                    Text("No search results yet.")
-                        .foregroundStyle(.secondary)
+                    PosterSection(
+                        title: "Awaiting First Run",
+                        subtitle: "Configure routes, pick provider kinds, and launch a search to populate this panel.",
+                        background: .white
+                    ) {
+                        Text("When results arrive, each route will show the best fare first, then alternate provider options below.")
+                            .font(outfit(size: 13, weight: .regular))
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
+                    }
                 }
             }
             .padding(20)
         }
+        .scrollIndicators(.hidden)
+    }
+
+    private func color(for kind: ProviderKind) -> Color {
+        switch kind {
+        case .airline:
+            return FlightFinderTheme.primary
+        case .metasearch:
+            return FlightFinderTheme.secondary
+        case .ota:
+            return FlightFinderTheme.accent
+        case .chinaPortal:
+            return FlightFinderTheme.slate
+        }
+    }
+
+    private func outfit(size: CGFloat, weight: Font.Weight) -> Font {
+        Font.custom("Outfit", size: size).weight(weight)
+    }
+}
+
+private struct PosterSection<Content: View>: View {
+    let title: String
+    let subtitle: String?
+    let background: Color
+    var foreground: Color = FlightFinderTheme.foreground
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(Font.custom("Outfit", size: 20).weight(.black))
+                    .foregroundStyle(foreground)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(Font.custom("Outfit", size: 13).weight(.regular))
+                        .foregroundStyle(foreground.opacity(0.78))
+                }
+            }
+
+            content
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(background)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct PrimaryPosterButtonStyle: ButtonStyle {
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white)
+            .background(color)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+private struct SecondaryPosterButtonStyle: ButtonStyle {
+    let background: Color
+    let foreground: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Font.custom("Outfit", size: 12).weight(.semibold))
+            .padding(.horizontal, 12)
+            .frame(height: 48)
+            .background(background)
+            .foregroundStyle(foreground)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+private struct OutlinePosterButtonStyle: ButtonStyle {
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Font.custom("Outfit", size: 12).weight(.semibold))
+            .padding(.horizontal, 12)
+            .frame(height: 38)
+            .foregroundStyle(configuration.isPressed ? .white : color)
+            .background(configuration.isPressed ? color : .clear)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(color, lineWidth: 3)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+private struct LabeledPickerCard<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(Font.custom("Outfit", size: 11).weight(.semibold))
+                .tracking(1.1)
+                .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+
+            content
+                .padding(9)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(FlightFinderTheme.border, lineWidth: 2)
+                )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct LabeledTextFieldCard: View {
+    let title: String
+    @Binding var text: String
+    let placeholder: String
+    let disabled: Bool
+
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(Font.custom("Outfit", size: 11).weight(.semibold))
+                .tracking(1.1)
+                .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .font(Font.custom("Outfit", size: 13).weight(.medium))
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(isFocused ? FlightFinderTheme.primary : FlightFinderTheme.border, lineWidth: 2)
+                )
+                .focused($isFocused)
+                .disabled(disabled)
+        }
+        .frame(width: 120, alignment: .leading)
     }
 }
 
@@ -265,64 +630,114 @@ private struct RouteInputCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Route")
-                    .font(.subheadline.weight(.semibold))
+                    .font(Font.custom("Outfit", size: 14).weight(.bold))
+
                 Spacer()
+
                 if canRemove {
                     Button("Remove", role: .destructive, action: onRemove)
+                        .buttonStyle(OutlinePosterButtonStyle(color: .red))
                         .disabled(isLocked)
                 }
             }
 
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Origin")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    TextField("SFO", text: $route.origin)
-                        .textFieldStyle(.roundedBorder)
-                        .autocorrectionDisabled(true)
+            HStack(spacing: 10) {
+                FlatTextInput(title: "Origin", placeholder: "SFO", text: $route.origin, disabled: isLocked)
+                FlatTextInput(title: "Destination", placeholder: "PVG", text: $route.destination, disabled: isLocked)
+            }
+
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("DEPARTURE")
+                        .font(Font.custom("Outfit", size: 11).weight(.semibold))
+                        .tracking(1.1)
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+
+                    DatePicker("", selection: $route.departureDate, displayedComponents: .date)
+                        .labelsHidden()
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(FlightFinderTheme.muted)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Destination")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    TextField("PVG", text: $route.destination)
-                        .textFieldStyle(.roundedBorder)
-                        .autocorrectionDisabled(true)
+                if tripType.requiresReturnDate {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("RETURN")
+                            .font(Font.custom("Outfit", size: 11).weight(.semibold))
+                            .tracking(1.1)
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+
+                        DatePicker("", selection: $route.returnDate, in: route.departureDate..., displayedComponents: .date)
+                            .labelsHidden()
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(FlightFinderTheme.muted)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
                 }
             }
             .disabled(isLocked)
-
-            HStack {
-                DatePicker("Departure", selection: $route.departureDate, displayedComponents: .date)
-                    .disabled(isLocked)
-                if tripType.requiresReturnDate {
-                    DatePicker("Return", selection: $route.returnDate, in: route.departureDate..., displayedComponents: .date)
-                        .disabled(isLocked)
-                }
-            }
         }
-        .padding(12)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(14)
+        .background(FlightFinderTheme.muted)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+private struct FlatTextInput: View {
+    let title: String
+    let placeholder: String
+    @Binding var text: String
+    let disabled: Bool
+
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(Font.custom("Outfit", size: 11).weight(.semibold))
+                .tracking(1.1)
+                .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .font(Font.custom("Outfit", size: 15).weight(.medium))
+                .autocorrectionDisabled(true)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(isFocused ? FlightFinderTheme.primary : FlightFinderTheme.border, lineWidth: 2)
+                )
+                .focused($isFocused)
+                .disabled(disabled)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 private struct ToggleChip: View {
     let title: String
     let isOn: Bool
+    let tint: Color
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.caption.weight(.semibold))
-                .padding(.vertical, 6)
-                .padding(.horizontal, 10)
-                .foregroundStyle(isOn ? .white : .primary)
-                .background(isOn ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .font(Font.custom("Outfit", size: 12).weight(.semibold))
+                .padding(.vertical, 9)
+                .padding(.horizontal, 12)
+                .foregroundStyle(isOn ? .white : FlightFinderTheme.foreground)
+                .background(isOn ? tint : .white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(isOn ? tint : FlightFinderTheme.border, lineWidth: isOn ? 0 : 2)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -331,40 +746,45 @@ private struct ToggleChip: View {
 private struct RouteResultCard: View {
     let routeResult: RouteSearchResult
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            let route = routeResult.route
-            let routeTitle = "\(route.origin) → \(route.destination)"
-            let best = routeResult.bestOffer
+    private var title: String {
+        "\(routeResult.route.origin) → \(routeResult.route.destination)"
+    }
 
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(routeTitle)
-                        .font(.headline)
-                    Text("\(DateFormatter.flightDate.string(from: route.departureDate))" +
-                         (route.returnDate.map { " to \(DateFormatter.flightDate.string(from: $0))" } ?? ""))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if let best, let price = best.totalPrice {
-                    Text("Best: \(best.currencyCode) \(price, format: .number.precision(.fractionLength(0...2)))")
-                        .font(.subheadline.weight(.semibold))
-                }
+    private var dateLine: String {
+        let outbound = DateFormatter.flightDate.string(from: routeResult.route.departureDate)
+        if let returnDate = routeResult.route.returnDate {
+            return "\(outbound) to \(DateFormatter.flightDate.string(from: returnDate))"
+        }
+        return outbound
+    }
+
+    var body: some View {
+        PosterSection(
+            title: title,
+            subtitle: dateLine,
+            background: .white
+        ) {
+            if let best = routeResult.bestOffer, let price = best.totalPrice {
+                Text("Best: \(best.currencyCode) \(price, format: .number.precision(.fractionLength(0...2)))")
+                    .font(Font.custom("Outfit", size: 15).weight(.black))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(FlightFinderTheme.accent.opacity(0.22))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
 
             if routeResult.offers.isEmpty {
                 Text("No offers found.")
-                    .foregroundStyle(.secondary)
+                    .font(Font.custom("Outfit", size: 13).weight(.regular))
+                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
             } else {
-                ForEach(routeResult.offers.prefix(15)) { offer in
-                    OfferRow(offer: offer)
+                VStack(spacing: 8) {
+                    ForEach(routeResult.offers.prefix(15)) { offer in
+                        OfferRow(offer: offer)
+                    }
                 }
             }
         }
-        .padding(14)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -374,13 +794,13 @@ private struct OfferRow: View {
     private var statusColor: Color {
         switch offer.status {
         case .priced:
-            return .green
+            return FlightFinderTheme.secondary
         case .handoffRequired:
-            return .orange
+            return FlightFinderTheme.accent
         case .loginRequired:
-            return .red
+            return Color.red
         case .unavailable:
-            return .gray
+            return FlightFinderTheme.slate
         }
     }
 
@@ -395,59 +815,57 @@ private struct OfferRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
                     Text(offer.providerName)
-                        .font(.subheadline.weight(.medium))
+                        .font(Font.custom("Outfit", size: 14).weight(.bold))
+
                     Text(offer.providerKind.rawValue)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Font.custom("Outfit", size: 11).weight(.medium))
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.68))
+
                     Text(statusText)
-                        .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .font(Font.custom("Outfit", size: 10).weight(.semibold))
+                        .tracking(0.8)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 7)
                         .background(statusColor.opacity(0.2))
                         .foregroundStyle(statusColor)
-                        .clipShape(Capsule())
+                        .clipShape(RoundedRectangle(cornerRadius: 999, style: .continuous))
                 }
 
                 HStack(spacing: 10) {
                     if let price = offer.totalPrice {
                         Text("\(offer.currencyCode) \(price, format: .number.precision(.fractionLength(0...2)))")
-                            .font(.subheadline.weight(.semibold))
+                            .font(Font.custom("Outfit", size: 15).weight(.black))
                     } else {
                         Text("Price unavailable")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if let departure = offer.departureTime {
-                        Text("Dep: \(departure)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if let arrival = offer.arrivalTime {
-                        Text("Arr: \(arrival)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Font.custom("Outfit", size: 13).weight(.medium))
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
                     }
 
                     if let stops = offer.stops {
                         Text(stops == 0 ? "Nonstop" : "\(stops) stops")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Font.custom("Outfit", size: 12).weight(.medium))
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+                    }
+
+                    if let departure = offer.departureTime {
+                        Text("Dep: \(departure)")
+                            .font(Font.custom("Outfit", size: 12).weight(.medium))
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
                     }
                 }
 
                 Text(offer.notes)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Font.custom("Outfit", size: 12).weight(.regular))
+                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+                    .lineLimit(2)
 
                 if let reachability = offer.chinaReachabilityScore {
                     Text("China Reachability: \(Int(reachability * 100))%")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(Font.custom("Outfit", size: 11).weight(.medium))
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.68))
                 }
             }
 
@@ -456,10 +874,10 @@ private struct OfferRow: View {
             Button("Open") {
                 NSWorkspace.shared.open(offer.deepLink)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.primary))
         }
         .padding(10)
-        .background(Color(nsColor: .textBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(FlightFinderTheme.muted)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }

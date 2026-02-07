@@ -7,9 +7,17 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Search up to 3 routes simultaneously.
 - One-way and round-trip.
 - Passenger mix, cabin class, bag options, nonstop toggle, max stops, flexible days.
+- Scenario presets (`US West Coast`, `USA to Shanghai`, `US Triangle`) for fast setup.
+- Persistent defaults for routes/options/provider kinds between app launches.
 - Provider types can be enabled/disabled: Airline, Metasearch, OTA, China Portal.
 - Results are ranked by normalized score (price, stops, confidence, and availability state).
 - Status-aware outputs: priced, handoff required, login required, unavailable.
+
+## UI System
+
+- Flat, bold, geometric SwiftUI interface with strict no-shadow styling.
+- Tokenized palette and typography aligned to the provided design system.
+- Dedicated UI planning evolution doc: `docs/UI_PLAN_v1_to_v21.md`.
 
 ## China Accessible Sites Mode
 
