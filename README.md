@@ -15,6 +15,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Session and route observability counters (attempts, dedupe counts, status mix, average latency).
 - Offer-level audit trail metadata path (provider mode/status/timing per attempt).
 - Persistent watchlist entries with merge/update behavior from best priced route offers.
+- In-app watchlist target-hit alerts with open/dismiss controls and auto-refresh of observed prices.
 - Status-aware outputs: priced, handoff required, login required, unavailable.
 
 ## UI System

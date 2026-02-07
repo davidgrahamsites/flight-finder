@@ -7,6 +7,7 @@ final class SearchViewModel: ObservableObject {
     @Published var enabledKinds: Set<ProviderKind>
     @Published var selectedPreset: SearchPreset?
     @Published var watchlist: [WatchCandidate]
+    @Published var watchlistAlerts: [WatchlistAlert]
 
     @Published var isSearching = false
     @Published var progressByRoute: [String: SearchProgress] = [:]
@@ -27,6 +28,7 @@ final class SearchViewModel: ObservableObject {
         self.routes = [RouteInputState(origin: "SFO", destination: "LAX")]
         self.selectedPreset = nil
         self.watchlist = []
+        self.watchlistAlerts = []
         restoreDefaultsIfAvailable()
     }
 
@@ -56,11 +58,20 @@ final class SearchViewModel: ObservableObject {
 
     func removeWatchCandidate(id: UUID) {
         watchlist.removeAll { $0.id == id }
+        watchlistAlerts.removeAll { $0.candidateID == id }
         saveDefaults()
     }
 
+    func dismissWatchlistAlert(id: UUID) {
+        watchlistAlerts.removeAll { $0.id == id }
+    }
+
+    func clearWatchlistAlerts() {
+        watchlistAlerts = []
+    }
+
     @discardableResult
-    func mergeWatchCandidates(_ candidates: [WatchCandidate]) -> Int {
+    func mergeWatchCandidates(_ candidates: [WatchCandidate], saveIfChanged: Bool = true) -> Int {
         guard !candidates.isEmpty else { return 0 }
 
         var indexByKey: [String: Int] = [:]
@@ -97,16 +108,21 @@ final class SearchViewModel: ObservableObject {
         }
 
         if changedCount > 0 {
-            watchlist = merged.sorted { lhs, rhs in
-                if lhs.lastSeenAt == rhs.lastSeenAt {
-                    return lhs.routeKey < rhs.routeKey
-                }
-                return lhs.lastSeenAt > rhs.lastSeenAt
+            watchlist = sortWatchlist(merged)
+            if saveIfChanged {
+                saveDefaults()
             }
-            saveDefaults()
         }
 
         return changedCount
+    }
+
+    func processSessionResult(_ result: SearchSessionResult, observedAt: Date = Date()) {
+        sessionResult = result
+        let freshAlerts = syncWatchlistToOffers(from: result, observedAt: observedAt)
+        appendWatchlistAlerts(freshAlerts)
+        _ = mergeWatchCandidates(result.watchCandidates, saveIfChanged: false)
+        saveDefaults()
     }
 
     func applyPreset(_ preset: SearchPreset) {
@@ -145,9 +161,7 @@ final class SearchViewModel: ObservableObject {
                     self?.progressByRoute[progress.routeKey] = progress
                 }
             }
-            sessionResult = result
-            mergeWatchCandidates(result.watchCandidates)
-            saveDefaults()
+            processSessionResult(result)
         } catch {
             sessionResult = nil
             searchError = error.localizedDescription
@@ -167,11 +181,123 @@ final class SearchViewModel: ObservableObject {
         options = saved.options
         enabledKinds = saved.enabledKinds.isEmpty ? Set(ProviderKind.allCases) : saved.enabledKinds
         selectedPreset = saved.lastPreset
-        watchlist = saved.watchlist.sorted { lhs, rhs in
+        watchlist = sortWatchlist(saved.watchlist)
+    }
+
+    private func syncWatchlistToOffers(from result: SearchSessionResult, observedAt: Date) -> [WatchlistAlert] {
+        guard !watchlist.isEmpty else { return [] }
+
+        let matchedOffers = bestPricedOffersByWatchKey(from: result)
+        guard !matchedOffers.isEmpty else { return [] }
+
+        var updatedWatchlist = watchlist
+        var alerts: [WatchlistAlert] = []
+        var changed = false
+
+        for index in updatedWatchlist.indices {
+            let candidate = updatedWatchlist[index]
+            let key = watchKey(routeKey: candidate.routeKey, providerID: candidate.providerID)
+            guard
+                let offer = matchedOffers[key],
+                let price = offer.totalPrice
+            else {
+                continue
+            }
+
+            let roundedPrice = roundToTwo(price)
+            let nextLastSeen = max(candidate.lastSeenAt, observedAt)
+            let refreshed = WatchCandidate(
+                id: candidate.id,
+                routeKey: candidate.routeKey,
+                providerID: candidate.providerID,
+                providerName: offer.providerName,
+                deepLink: offer.deepLink,
+                currencyCode: offer.currencyCode,
+                observedPrice: roundedPrice,
+                targetPrice: candidate.targetPrice,
+                lastSeenAt: nextLastSeen
+            )
+
+            if refreshed != candidate {
+                updatedWatchlist[index] = refreshed
+                changed = true
+            }
+
+            if roundedPrice <= candidate.targetPrice {
+                alerts.append(
+                    WatchlistAlert(
+                        candidateID: candidate.id,
+                        routeKey: candidate.routeKey,
+                        providerID: candidate.providerID,
+                        providerName: offer.providerName,
+                        observedPrice: roundedPrice,
+                        targetPrice: candidate.targetPrice,
+                        currencyCode: offer.currencyCode,
+                        deepLink: offer.deepLink,
+                        hitAt: observedAt
+                    )
+                )
+            }
+        }
+
+        if changed {
+            watchlist = sortWatchlist(updatedWatchlist)
+        }
+
+        return alerts
+    }
+
+    private func bestPricedOffersByWatchKey(from result: SearchSessionResult) -> [String: FlightOffer] {
+        var offersByKey: [String: FlightOffer] = [:]
+
+        for routeResult in result.routes {
+            for offer in routeResult.offers {
+                guard
+                    offer.status == .priced,
+                    let price = offer.totalPrice
+                else {
+                    continue
+                }
+
+                let key = watchKey(routeKey: routeResult.route.routeKey, providerID: offer.providerID)
+                if let existing = offersByKey[key], let existingPrice = existing.totalPrice, existingPrice <= price {
+                    continue
+                }
+
+                offersByKey[key] = offer
+            }
+        }
+
+        return offersByKey
+    }
+
+    private func appendWatchlistAlerts(_ alerts: [WatchlistAlert]) {
+        guard !alerts.isEmpty else { return }
+
+        var knownKeys = Set(watchlistAlerts.map(\.dedupeKey))
+        var merged = watchlistAlerts
+        for alert in alerts {
+            guard !knownKeys.contains(alert.dedupeKey) else { continue }
+            knownKeys.insert(alert.dedupeKey)
+            merged.insert(alert, at: 0)
+        }
+        watchlistAlerts = Array(merged.prefix(30))
+    }
+
+    private func sortWatchlist(_ items: [WatchCandidate]) -> [WatchCandidate] {
+        items.sorted { lhs, rhs in
             if lhs.lastSeenAt == rhs.lastSeenAt {
                 return lhs.routeKey < rhs.routeKey
             }
             return lhs.lastSeenAt > rhs.lastSeenAt
         }
+    }
+
+    private func watchKey(routeKey: String, providerID: String) -> String {
+        "\(routeKey)|\(providerID)"
+    }
+
+    private func roundToTwo(_ value: Double) -> Double {
+        (value * 100).rounded() / 100
     }
 }

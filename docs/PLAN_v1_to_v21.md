@@ -31,3 +31,7 @@
 
 ## v21 Outcome
 - Functional + visual roadmap delivered end-to-end.
+
+## Post-v21 Enhancements
+1. Watchlist target-hit alerts with deterministic session-based detection: complete
+2. Watchlist observed-price refresh from matching priced offers: complete

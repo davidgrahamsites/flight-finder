@@ -389,6 +389,21 @@ struct FlightFinderView: View {
                         }
                     }
                 }
+
+                if !viewModel.watchlistAlerts.isEmpty {
+                    HStack(spacing: 10) {
+                        Text("\(viewModel.watchlistAlerts.count) watchlist target hit\(viewModel.watchlistAlerts.count == 1 ? "" : "s") ready.")
+                            .font(outfit(size: 12, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.9))
+
+                        Spacer()
+
+                        Button("Clear Alerts") {
+                            viewModel.clearWatchlistAlerts()
+                        }
+                        .buttonStyle(SecondaryPosterButtonStyle(background: .white.opacity(0.14), foreground: .white))
+                    }
+                }
             }
         }
     }
@@ -460,6 +475,24 @@ struct FlightFinderView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 190)
+
+                if !viewModel.watchlistAlerts.isEmpty {
+                    PosterSection(
+                        title: "Watchlist Alerts",
+                        subtitle: "These providers are at or below your target threshold right now.",
+                        background: Color(hex: 0xFEF3C7)
+                    ) {
+                        VStack(spacing: 8) {
+                            ForEach(viewModel.watchlistAlerts.prefix(10)) { alert in
+                                WatchlistAlertRow(
+                                    alert: alert,
+                                    onOpen: { NSWorkspace.shared.open(alert.deepLink) },
+                                    onDismiss: { viewModel.dismissWatchlistAlert(id: alert.id) }
+                                )
+                            }
+                        }
+                    }
+                }
 
                 if let session = viewModel.sessionResult {
                     SessionObservabilityCard(session: session)
@@ -1010,6 +1043,50 @@ private struct WatchlistRow: View {
                     .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.primary))
 
                 Button("Remove", role: .destructive, action: onRemove)
+                    .buttonStyle(OutlinePosterButtonStyle(color: .red))
+            }
+        }
+        .padding(10)
+        .background(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(FlightFinderTheme.border, lineWidth: 2)
+        )
+    }
+}
+
+private struct WatchlistAlertRow: View {
+    let alert: WatchlistAlert
+    let onOpen: () -> Void
+    let onDismiss: () -> Void
+
+    private var savedAmount: Double {
+        max(0, alert.targetPrice - alert.observedPrice)
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(alert.routeKey) • \(alert.providerName)")
+                    .font(Font.custom("Outfit", size: 13).weight(.bold))
+
+                Text("Hit: \(alert.currencyCode) \(alert.observedPrice, format: .number.precision(.fractionLength(0...2)))  •  Target: \(alert.currencyCode) \(alert.targetPrice, format: .number.precision(.fractionLength(0...2)))")
+                    .font(Font.custom("Outfit", size: 12).weight(.medium))
+                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.74))
+
+                Text("Under target by \(alert.currencyCode) \(savedAmount, format: .number.precision(.fractionLength(0...2))) • \(alert.hitAt.formatted(date: .abbreviated, time: .shortened))")
+                    .font(Font.custom("Outfit", size: 11).weight(.semibold))
+                    .foregroundStyle(FlightFinderTheme.secondary)
+            }
+
+            Spacer(minLength: 0)
+
+            HStack(spacing: 6) {
+                Button("Open", action: onOpen)
+                    .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.primary))
+
+                Button("Dismiss", role: .destructive, action: onDismiss)
                     .buttonStyle(OutlinePosterButtonStyle(color: .red))
             }
         }
