@@ -1,6 +1,6 @@
 # FlightFinder Skills Playbook
 
-This project now uses a curated subset from the VoltAgent awesome-agent-skills list that directly supports FlightFinder development.
+This project ships both a curated recommended set and a full-catalog installer based on the live VoltAgent Awesome Agent Skills list.
 
 ## Installed Skills
 
@@ -24,6 +24,25 @@ This project now uses a curated subset from the VoltAgent awesome-agent-skills l
 
 - `scripts/install_recommended_skills.sh`
   - Reinstalls this exact skills set on any machine.
+  - Supports `--official-claude-skills` for all Official Claude skills.
+  - Supports `--all-catalog` for the full live catalog.
+
+- `scripts/install_awesome_skills.sh`
+  - Catalog installer wrapper with scope controls.
+
+- `scripts/install_awesome_skills.mjs`
+  - Parses the live Awesome Agent Skills README and resolves GitHub repo/path install specs.
+  - Supports `--scope official-claude-skills` and `--scope all`.
+  - Supports `--dry-run` and `--manifest-out` for deterministic preview and snapshots.
+
+- `scripts/awesome_skills_catalog.mjs`
+  - Shared parser utilities for catalog section parsing and install-spec extraction.
+
+- `scripts/tests/awesome_skills_catalog.test.mjs`
+  - Regression tests for catalog parsing and GitHub URL normalization.
+
+- `config/awesome-skills.official.manifest.json`
+  - Snapshot manifest generated from `--scope official-claude-skills`.
 
 - `scripts/provider_smoke_playwright.mjs`
   - Runs browser reachability checks against flight providers.
@@ -40,6 +59,8 @@ This project now uses a curated subset from the VoltAgent awesome-agent-skills l
 
 1. Install/refresh skills:
    - `./scripts/install_recommended_skills.sh`
+   - Optional full official set: `./scripts/install_awesome_skills.sh --scope official-claude-skills`
+   - Optional full catalog: `./scripts/install_awesome_skills.sh --scope all`
 2. Restart Codex.
 3. Validate project:
    - `./scripts/validate_with_skills.sh`

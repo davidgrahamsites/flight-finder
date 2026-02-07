@@ -60,7 +60,13 @@ xcodebuild -project FlightFinder.xcodeproj \
 
 This repo includes skill-oriented tooling aligned to the VoltAgent skills catalog:
 
-- `scripts/install_recommended_skills.sh` installs the recommended skills set.
+- `scripts/install_recommended_skills.sh` installs the recommended FlightFinder skills set.
+- `scripts/install_awesome_skills.sh` installs skills from the live Awesome Agent Skills catalog.
+- `scripts/install_awesome_skills.mjs` supports scoped install modes:
+  - `--scope official-claude-skills` (all official Claude skills)
+  - `--scope all` (full catalog)
+  - `--dry-run` + `--manifest-out` for safe preview and reproducible manifests
+- `config/awesome-skills.official.manifest.json` is a generated snapshot from the official scope.
 - `scripts/validate_with_skills.sh` runs build/test verification plus optional browser checks.
 - `scripts/provider_smoke_playwright.mjs` performs provider reachability smoke tests.
 - `docs/SKILLS_PLAYBOOK.md` explains skill usage and workflow.

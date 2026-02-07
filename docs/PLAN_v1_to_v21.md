@@ -41,3 +41,4 @@
 6. China sweep scope control for full-catalog probing + persisted preference: complete
 7. Login-required offer handoff prompt with explicit user confirmation flow: complete
 8. Results panel filter controls (status + row cap) with deterministic view-model behavior: complete
+9. Skills catalog integration expanded to live Awesome Agent Skills parser + scoped installers (official/all): complete

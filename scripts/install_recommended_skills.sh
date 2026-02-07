@@ -3,6 +3,17 @@ set -euo pipefail
 
 INSTALLER="/Users/appleadmin/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py"
 SKILLS_DIR="${CODEX_HOME:-$HOME/.codex}/skills"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ "${1:-}" == "--official-claude-skills" ]]; then
+  node "$ROOT_DIR/scripts/install_awesome_skills.mjs" --scope official-claude-skills
+  exit 0
+fi
+
+if [[ "${1:-}" == "--all-catalog" ]]; then
+  node "$ROOT_DIR/scripts/install_awesome_skills.mjs" --scope all
+  exit 0
+fi
 
 install_if_missing() {
   local skill_name="$1"
@@ -34,4 +45,6 @@ install_if_missing "test-driven-development" --repo obra/superpowers --path skil
 cat <<'MSG'
 Installed recommended skills for FlightFinder.
 Restart Codex to pick up new skills.
+Use ./scripts/install_recommended_skills.sh --official-claude-skills for all Official Claude skills.
+Use ./scripts/install_recommended_skills.sh --all-catalog for the full Awesome Agent Skills catalog.
 MSG
