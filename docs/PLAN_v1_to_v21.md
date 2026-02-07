@@ -38,3 +38,4 @@
 3. Watchlist re-check planning and execution flow (trip-type aware, 3-route bounded): complete
 4. Auto watchlist re-check scheduler + local notification dispatch pipeline: complete
 5. China accessibility diagnostics sweep + ranked snapshot panel in UI (deterministic, no AI): complete
+6. China sweep scope control for full-catalog probing + persisted preference: complete

@@ -261,6 +261,16 @@ struct FlightFinderView: View {
                                 .disabled(viewModel.isRunningChinaAccessibilitySweep || viewModel.isSearching)
                             }
 
+                            Toggle(
+                                "Probe All Sites (ignore provider-type filter)",
+                                isOn: Binding(
+                                    get: { viewModel.chinaSweepIncludesAllProviders },
+                                    set: { viewModel.setChinaSweepIncludesAllProviders($0) }
+                                )
+                            )
+                            .font(outfit(size: 11, weight: .semibold))
+                            .disabled(viewModel.isRunningChinaAccessibilitySweep || viewModel.isSearching)
+
                             if let summary = viewModel.chinaAccessSummary, !summary.isEmpty {
                                 Text(summary)
                                     .font(outfit(size: 11, weight: .medium))

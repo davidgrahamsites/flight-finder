@@ -35,6 +35,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Prioritizes and filters providers using blended seed + learned reachability.
 - Surfaces China reachability score in results.
 - Adds an explicit "Probe Sites" sweep to test currently enabled provider categories and update local learning stats.
+- Supports "Probe All Sites" scope to test the full provider catalog even when specific provider types are filtered in search mode.
 
 ## Provider Coverage
 

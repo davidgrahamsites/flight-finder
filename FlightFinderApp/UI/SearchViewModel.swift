@@ -14,6 +14,7 @@ final class SearchViewModel: ObservableObject {
     @Published var chinaAccessSnapshots: [ChinaAccessibilityPlanner.ProviderSnapshot]
     @Published var chinaAccessSummary: String?
     @Published var isRunningChinaAccessibilitySweep: Bool
+    @Published var chinaSweepIncludesAllProviders: Bool
 
     @Published var isSearching = false
     @Published var progressByRoute: [String: SearchProgress] = [:]
@@ -46,6 +47,7 @@ final class SearchViewModel: ObservableObject {
         self.chinaAccessSnapshots = []
         self.chinaAccessSummary = nil
         self.isRunningChinaAccessibilitySweep = false
+        self.chinaSweepIncludesAllProviders = false
         self.watchlistRecheckSummary = nil
         restoreDefaultsIfAvailable()
         restartAutoWatchlistRecheckTask()
@@ -126,8 +128,24 @@ final class SearchViewModel: ObservableObject {
         saveDefaults()
     }
 
+    func setChinaSweepIncludesAllProviders(_ enabled: Bool) {
+        guard chinaSweepIncludesAllProviders != enabled else { return }
+        chinaSweepIncludesAllProviders = enabled
+        saveDefaults()
+
+        if options.siteAccessMode == .chinaAccessible {
+            Task { [weak self] in
+                guard let self else { return }
+                await self.refreshChinaAccessibilitySnapshot()
+            }
+        }
+    }
+
     func refreshChinaAccessibilitySnapshot() async {
-        let snapshots = await coordinator.chinaAccessibilitySnapshot(enabledKinds: enabledKinds)
+        let snapshots = await coordinator.chinaAccessibilitySnapshot(
+            enabledKinds: enabledKinds,
+            includeAllProviders: chinaSweepIncludesAllProviders
+        )
         chinaAccessSnapshots = Array(snapshots.prefix(12))
     }
 
@@ -136,7 +154,10 @@ final class SearchViewModel: ObservableObject {
         isRunningChinaAccessibilitySweep = true
         chinaAccessSummary = nil
 
-        let report = await coordinator.runChinaAccessibilitySweep(enabledKinds: enabledKinds)
+        let report = await coordinator.runChinaAccessibilitySweep(
+            enabledKinds: enabledKinds,
+            includeAllProviders: chinaSweepIncludesAllProviders
+        )
         chinaAccessSnapshots = Array(report.snapshots.prefix(12))
         chinaAccessSummary = buildChinaAccessibilitySummary(report)
         isRunningChinaAccessibilitySweep = false
@@ -332,7 +353,8 @@ final class SearchViewModel: ObservableObject {
             watchlist: watchlist,
             autoWatchlistRecheckEnabled: autoWatchlistRecheckEnabled,
             autoWatchlistRecheckIntervalMinutes: autoWatchlistRecheckIntervalMinutes,
-            watchlistNotificationsEnabled: watchlistNotificationsEnabled
+            watchlistNotificationsEnabled: watchlistNotificationsEnabled,
+            chinaSweepIncludesAllProviders: chinaSweepIncludesAllProviders
         )
         preferencesStore.save(config)
     }
@@ -376,6 +398,7 @@ final class SearchViewModel: ObservableObject {
         autoWatchlistRecheckEnabled = saved.autoWatchlistRecheckEnabled
         autoWatchlistRecheckIntervalMinutes = normalizedAutoWatchlistRecheckInterval(saved.autoWatchlistRecheckIntervalMinutes)
         watchlistNotificationsEnabled = saved.watchlistNotificationsEnabled
+        chinaSweepIncludesAllProviders = saved.chinaSweepIncludesAllProviders
     }
 
     private func syncWatchlistToOffers(from result: SearchSessionResult, observedAt: Date) -> [WatchlistAlert] {

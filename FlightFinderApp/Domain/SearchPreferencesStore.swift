@@ -9,6 +9,7 @@ struct SavedSearchConfig: Codable, Hashable {
     var autoWatchlistRecheckEnabled: Bool
     var autoWatchlistRecheckIntervalMinutes: Int
     var watchlistNotificationsEnabled: Bool
+    var chinaSweepIncludesAllProviders: Bool
 
     init(
         routes: [RouteInputState],
@@ -18,7 +19,8 @@ struct SavedSearchConfig: Codable, Hashable {
         watchlist: [WatchCandidate] = [],
         autoWatchlistRecheckEnabled: Bool = false,
         autoWatchlistRecheckIntervalMinutes: Int = 30,
-        watchlistNotificationsEnabled: Bool = true
+        watchlistNotificationsEnabled: Bool = true,
+        chinaSweepIncludesAllProviders: Bool = false
     ) {
         self.routes = routes
         self.options = options
@@ -28,6 +30,7 @@ struct SavedSearchConfig: Codable, Hashable {
         self.autoWatchlistRecheckEnabled = autoWatchlistRecheckEnabled
         self.autoWatchlistRecheckIntervalMinutes = autoWatchlistRecheckIntervalMinutes
         self.watchlistNotificationsEnabled = watchlistNotificationsEnabled
+        self.chinaSweepIncludesAllProviders = chinaSweepIncludesAllProviders
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -39,6 +42,7 @@ struct SavedSearchConfig: Codable, Hashable {
         case autoWatchlistRecheckEnabled
         case autoWatchlistRecheckIntervalMinutes
         case watchlistNotificationsEnabled
+        case chinaSweepIncludesAllProviders
     }
 
     init(from decoder: Decoder) throws {
@@ -51,6 +55,7 @@ struct SavedSearchConfig: Codable, Hashable {
         self.autoWatchlistRecheckEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoWatchlistRecheckEnabled) ?? false
         self.autoWatchlistRecheckIntervalMinutes = try container.decodeIfPresent(Int.self, forKey: .autoWatchlistRecheckIntervalMinutes) ?? 30
         self.watchlistNotificationsEnabled = try container.decodeIfPresent(Bool.self, forKey: .watchlistNotificationsEnabled) ?? true
+        self.chinaSweepIncludesAllProviders = try container.decodeIfPresent(Bool.self, forKey: .chinaSweepIncludesAllProviders) ?? false
     }
 }
 

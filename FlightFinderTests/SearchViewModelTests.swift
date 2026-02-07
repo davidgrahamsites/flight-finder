@@ -637,6 +637,81 @@ struct SearchViewModelTests {
         #expect(viewModel.chinaAccessSummary?.contains("1 reachable") == true)
         #expect(viewModel.chinaAccessSummary?.contains("0 blocked") == true)
     }
+
+    @Test("China accessibility sweep can include full provider catalog")
+    func chinaAccessibilitySweepIncludesAllProvidersWhenEnabled() async {
+        let store = InMemorySearchPreferencesStore()
+        let reachableURL = URL(string: "https://reachable.example")!
+        let blockedURL = URL(string: "https://blocked.example")!
+
+        let providers = [
+            makeProvider(
+                id: "reachable-provider",
+                name: "Reachable Provider",
+                homepage: reachableURL,
+                kind: .chinaPortal,
+                seedReachability: 0.9
+            ),
+            makeProvider(
+                id: "blocked-provider",
+                name: "Blocked Provider",
+                homepage: blockedURL,
+                kind: .metasearch,
+                seedReachability: 0.1
+            )
+        ]
+
+        let planner = ChinaAccessibilityPlanner(
+            learningStore: ProviderAccessLearningStore(filename: "provider_access_stats_test_\(UUID().uuidString).json"),
+            reachabilityProber: StubReachabilityProber(
+                resultsByURL: [
+                    reachableURL: true,
+                    blockedURL: false
+                ]
+            )
+        )
+        let coordinator = FlightSearchCoordinator(
+            providers: providers,
+            httpClient: ProviderHTTPClient(),
+            ranking: OfferRankingService(),
+            normalizer: CurrencyNormalizer(),
+            chinaPlanner: planner
+        )
+        let viewModel = SearchViewModel(
+            coordinator: coordinator,
+            preferencesStore: store
+        )
+
+        viewModel.enabledKinds = [.chinaPortal]
+        viewModel.setChinaSweepIncludesAllProviders(true)
+        await viewModel.runChinaAccessibilitySweep()
+
+        #expect(viewModel.chinaAccessSnapshots.count == 2)
+        #expect(viewModel.chinaAccessSummary?.contains("Probed 2 providers") == true)
+        #expect(viewModel.chinaAccessSummary?.contains("1 reachable") == true)
+        #expect(viewModel.chinaAccessSummary?.contains("1 blocked") == true)
+    }
+
+    @Test("China sweep scope preference is persisted and restored")
+    func chinaSweepScopePersists() {
+        let store = InMemorySearchPreferencesStore()
+
+        do {
+            let first = SearchViewModel(
+                coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+                preferencesStore: store
+            )
+            first.setChinaSweepIncludesAllProviders(true)
+            first.saveDefaults()
+        }
+
+        let second = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        #expect(second.chinaSweepIncludesAllProviders == true)
+    }
 }
 
 private final class InMemorySearchPreferencesStore: SearchPreferencesStore {

@@ -33,13 +33,23 @@ struct FlightSearchCoordinator {
         self.interBatchDelay = interBatchDelay
     }
 
-    func chinaAccessibilitySnapshot(enabledKinds: Set<ProviderKind>) async -> [ChinaAccessibilityPlanner.ProviderSnapshot] {
-        let selected = providers.filter { enabledKinds.contains($0.descriptor.kind) }
+    func chinaAccessibilitySnapshot(
+        enabledKinds: Set<ProviderKind>,
+        includeAllProviders: Bool = false
+    ) async -> [ChinaAccessibilityPlanner.ProviderSnapshot] {
+        let selected = includeAllProviders
+            ? providers
+            : providers.filter { enabledKinds.contains($0.descriptor.kind) }
         return await chinaPlanner.snapshots(providers: selected)
     }
 
-    func runChinaAccessibilitySweep(enabledKinds: Set<ProviderKind>) async -> ChinaAccessibilityPlanner.ProbeReport {
-        let selected = providers.filter { enabledKinds.contains($0.descriptor.kind) }
+    func runChinaAccessibilitySweep(
+        enabledKinds: Set<ProviderKind>,
+        includeAllProviders: Bool = false
+    ) async -> ChinaAccessibilityPlanner.ProbeReport {
+        let selected = includeAllProviders
+            ? providers
+            : providers.filter { enabledKinds.contains($0.descriptor.kind) }
         return await chinaPlanner.probeAndSnapshot(providers: selected)
     }
 
