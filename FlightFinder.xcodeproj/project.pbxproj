@@ -16,6 +16,7 @@
 		30C80358757208BEE1B5EBB0 /* RouteInputState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9F0BAB31D493C5F72EB0268 /* RouteInputState.swift */; };
 		3638A6BB206B5261547DA8A7 /* SearchPreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F1D0D5CFE18E0358EDEA62E /* SearchPreferencesStore.swift */; };
 		3640178168EEDB40C88FB8AB /* FlightFinderCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D043D48F79FDC773DA4FF663 /* FlightFinderCoreTests.swift */; };
+		3674AF792AE170158B44564E /* OfferOpenClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B930C2A91453FBE6967CF2E0 /* OfferOpenClient.swift */; };
 		3D5894A81F3EF8E0B7699B19 /* ProviderDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5AB86D49C9147A9AEF7DD32 /* ProviderDescriptor.swift */; };
 		3F0C5DBF4CEAC0F94E0E40AD /* ProviderAccessLearningStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730DC661A3691CD103B060C8 /* ProviderAccessLearningStore.swift */; };
 		42182DD1A53C6905D03D6743 /* TripType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 533599F79905E68020CBB39A /* TripType.swift */; };
@@ -99,6 +100,7 @@
 		ACE1ECF5EFAC19F3A66BED84 /* DateFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatting.swift; sourceTree = "<group>"; };
 		B0F1F90D944C57EE3E98D130 /* ProviderKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderKind.swift; sourceTree = "<group>"; };
 		B53BEE686B119D294DE2CFE1 /* ChinaAccessibilityPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChinaAccessibilityPlanner.swift; sourceTree = "<group>"; };
+		B930C2A91453FBE6967CF2E0 /* OfferOpenClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferOpenClient.swift; sourceTree = "<group>"; };
 		CAB47C98C181D47B56E48F3C /* WatchlistAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistAlert.swift; sourceTree = "<group>"; };
 		CBB3776DE3217463E53D689F /* SearchProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchProgress.swift; sourceTree = "<group>"; };
 		CE10EF3B21CC4844BE2AA45B /* OfferRankingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferRankingService.swift; sourceTree = "<group>"; };
@@ -194,6 +196,7 @@
 				4D66003F295C1D2873ED93E0 /* CurrencyNormalizer.swift */,
 				9CD22803B01C69E0D918874E /* FlightSearchCoordinator.swift */,
 				13DF0159559AF05D381F4726 /* OfferDeduplicationService.swift */,
+				B930C2A91453FBE6967CF2E0 /* OfferOpenClient.swift */,
 				CE10EF3B21CC4844BE2AA45B /* OfferRankingService.swift */,
 				730DC661A3691CD103B060C8 /* ProviderAccessLearningStore.swift */,
 				1EEB5DE8A978078EA2F337BA /* SearchSessionAnalyticsService.swift */,
@@ -367,6 +370,7 @@
 				57D10E8F51DB2FB95812F56A /* FlightSearchCoordinator.swift in Sources */,
 				D73E38DBECB9A0FDCEEEF061 /* FlightSearchOptions.swift in Sources */,
 				C9DFB4B060AF3F1829B279E3 /* OfferDeduplicationService.swift in Sources */,
+				3674AF792AE170158B44564E /* OfferOpenClient.swift in Sources */,
 				C7ED99A05B80DAAE7D32E6E4 /* OfferRankingService.swift in Sources */,
 				D57564AD3A201C3D7AE20079 /* PassengerMix.swift in Sources */,
 				076D01E187B18DAA3A64E97D /* PriceExtraction.swift in Sources */,
@@ -477,7 +481,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -491,7 +495,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -558,7 +562,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -578,7 +582,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

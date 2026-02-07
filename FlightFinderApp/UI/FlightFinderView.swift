@@ -26,6 +26,26 @@ struct FlightFinderView: View {
             }
             .navigationTitle("FlightFinder")
         }
+        .alert(
+            "Login Required",
+            isPresented: Binding(
+                get: { viewModel.pendingLoginOffer != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        viewModel.dismissPendingLoginOffer()
+                    }
+                }
+            )
+        ) {
+            Button("Cancel", role: .cancel) {
+                viewModel.dismissPendingLoginOffer()
+            }
+            Button("Open Login Page") {
+                viewModel.confirmLoginAndOpenPendingOffer()
+            }
+        } message: {
+            Text(loginPromptMessage)
+        }
     }
 
     private var configurationPane: some View {
@@ -670,7 +690,10 @@ struct FlightFinderView: View {
                     }
 
                     ForEach(session.routes) { routeResult in
-                        RouteResultCard(routeResult: routeResult)
+                        RouteResultCard(
+                            routeResult: routeResult,
+                            onOfferOpen: { viewModel.handleOfferOpenRequest($0) }
+                        )
                     }
                 } else {
                     PosterSection(
@@ -687,6 +710,13 @@ struct FlightFinderView: View {
             .padding(20)
         }
         .scrollIndicators(.hidden)
+    }
+
+    private var loginPromptMessage: String {
+        guard let offer = viewModel.pendingLoginOffer else {
+            return "This provider requires login before booking."
+        }
+        return "\(offer.providerName) requires login or captcha verification. Open the provider site to continue booking."
     }
 
     private func color(for kind: ProviderKind) -> Color {
@@ -1014,6 +1044,7 @@ private struct ChinaAccessibilityRow: View {
 
 private struct RouteResultCard: View {
     let routeResult: RouteSearchResult
+    let onOfferOpen: (FlightOffer) -> Void
 
     private var title: String {
         "\(routeResult.route.origin) → \(routeResult.route.destination)"
@@ -1058,7 +1089,10 @@ private struct RouteResultCard: View {
             } else {
                 VStack(spacing: 8) {
                     ForEach(routeResult.offers.prefix(15)) { offer in
-                        OfferRow(offer: offer)
+                        OfferRow(
+                            offer: offer,
+                            onOpen: { onOfferOpen(offer) }
+                        )
                     }
                 }
             }
@@ -1068,6 +1102,7 @@ private struct RouteResultCard: View {
 
 private struct OfferRow: View {
     let offer: FlightOffer
+    let onOpen: () -> Void
 
     private var statusColor: Color {
         switch offer.status {
@@ -1149,9 +1184,7 @@ private struct OfferRow: View {
 
             Spacer(minLength: 0)
 
-            Button("Open") {
-                NSWorkspace.shared.open(offer.deepLink)
-            }
+            Button("Open", action: onOpen)
             .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.primary))
         }
         .padding(10)

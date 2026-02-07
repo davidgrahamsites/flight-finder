@@ -15,6 +15,7 @@ final class SearchViewModel: ObservableObject {
     @Published var chinaAccessSummary: String?
     @Published var isRunningChinaAccessibilitySweep: Bool
     @Published var chinaSweepIncludesAllProviders: Bool
+    @Published var pendingLoginOffer: FlightOffer?
 
     @Published var isSearching = false
     @Published var progressByRoute: [String: SearchProgress] = [:]
@@ -25,16 +26,19 @@ final class SearchViewModel: ObservableObject {
     private let coordinator: FlightSearchCoordinator
     private let preferencesStore: any SearchPreferencesStore
     private let notificationClient: any WatchlistNotificationClient
+    private let offerOpenClient: any OfferOpenClient
     private var autoWatchlistRecheckTask: Task<Void, Never>?
 
     init(
         coordinator: FlightSearchCoordinator = FlightSearchCoordinator(),
         preferencesStore: any SearchPreferencesStore = UserDefaultsSearchPreferencesStore(),
-        notificationClient: any WatchlistNotificationClient = LocalWatchlistNotificationClient()
+        notificationClient: any WatchlistNotificationClient = LocalWatchlistNotificationClient(),
+        offerOpenClient: any OfferOpenClient = WorkspaceOfferOpenClient()
     ) {
         self.coordinator = coordinator
         self.preferencesStore = preferencesStore
         self.notificationClient = notificationClient
+        self.offerOpenClient = offerOpenClient
         self.options = .default
         self.enabledKinds = Set(ProviderKind.allCases)
         self.routes = [RouteInputState(origin: "SFO", destination: "LAX")]
@@ -48,6 +52,7 @@ final class SearchViewModel: ObservableObject {
         self.chinaAccessSummary = nil
         self.isRunningChinaAccessibilitySweep = false
         self.chinaSweepIncludesAllProviders = false
+        self.pendingLoginOffer = nil
         self.watchlistRecheckSummary = nil
         restoreDefaultsIfAvailable()
         restartAutoWatchlistRecheckTask()
@@ -139,6 +144,25 @@ final class SearchViewModel: ObservableObject {
                 await self.refreshChinaAccessibilitySnapshot()
             }
         }
+    }
+
+    func handleOfferOpenRequest(_ offer: FlightOffer) {
+        if offer.status == .loginRequired {
+            pendingLoginOffer = offer
+            return
+        }
+
+        offerOpenClient.open(url: offer.deepLink)
+    }
+
+    func confirmLoginAndOpenPendingOffer() {
+        guard let offer = pendingLoginOffer else { return }
+        pendingLoginOffer = nil
+        offerOpenClient.open(url: offer.deepLink)
+    }
+
+    func dismissPendingLoginOffer() {
+        pendingLoginOffer = nil
     }
 
     func refreshChinaAccessibilitySnapshot() async {

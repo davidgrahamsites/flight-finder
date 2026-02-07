@@ -20,6 +20,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Optional auto watchlist re-check scheduler (configurable interval) with local desktop target-hit notifications.
 - China accessibility diagnostics panel with one-click probe sweeps and ranked reachability snapshots by provider.
 - Status-aware outputs: priced, handoff required, login required, unavailable.
+- Login-required offers now trigger an explicit confirmation prompt before opening provider pages.
 
 ## UI System
 

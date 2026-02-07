@@ -712,6 +712,44 @@ struct SearchViewModelTests {
 
         #expect(second.chinaSweepIncludesAllProviders == true)
     }
+
+    @Test("Login-required offer prompts before opening")
+    func loginRequiredOfferPromptsBeforeOpen() {
+        let store = InMemorySearchPreferencesStore()
+        let opener = RecordingOfferOpenClient()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store,
+            offerOpenClient: opener
+        )
+
+        let offer = makeOffer(status: .loginRequired, deepLink: URL(string: "https://example.com/login")!)
+        viewModel.handleOfferOpenRequest(offer)
+
+        #expect(viewModel.pendingLoginOffer?.id == offer.id)
+        #expect(opener.openedURLs.isEmpty)
+
+        viewModel.confirmLoginAndOpenPendingOffer()
+        #expect(viewModel.pendingLoginOffer == nil)
+        #expect(opener.openedURLs == [URL(string: "https://example.com/login")!])
+    }
+
+    @Test("Non-login offer opens immediately without prompt")
+    func nonLoginOfferOpensImmediately() {
+        let store = InMemorySearchPreferencesStore()
+        let opener = RecordingOfferOpenClient()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store,
+            offerOpenClient: opener
+        )
+
+        let offer = makeOffer(status: .priced, deepLink: URL(string: "https://example.com/deal")!)
+        viewModel.handleOfferOpenRequest(offer)
+
+        #expect(viewModel.pendingLoginOffer == nil)
+        #expect(opener.openedURLs == [URL(string: "https://example.com/deal")!])
+    }
 }
 
 private final class InMemorySearchPreferencesStore: SearchPreferencesStore {
@@ -762,4 +800,33 @@ private struct StubReachabilityProber: ProviderReachabilityProbing {
     func probeReachability(url: URL) async -> Bool {
         resultsByURL[url] ?? false
     }
+}
+
+private final class RecordingOfferOpenClient: OfferOpenClient {
+    var openedURLs: [URL] = []
+
+    func open(url: URL) {
+        openedURLs.append(url)
+    }
+}
+
+private func makeOffer(status: FlightOffer.Status, deepLink: URL) -> FlightOffer {
+    FlightOffer(
+        providerID: "provider",
+        providerName: "Provider",
+        providerKind: .airline,
+        route: RouteRequest(origin: "SFO", destination: "LAX", departureDate: Date(timeIntervalSince1970: 1_700_000_000)),
+        totalPrice: 100,
+        currencyCode: "USD",
+        departureTime: nil,
+        arrivalTime: nil,
+        durationText: nil,
+        stops: 0,
+        deepLink: deepLink,
+        status: status,
+        confidence: 0.8,
+        notes: "",
+        collectedAt: Date(timeIntervalSince1970: 1_700_000_050),
+        baggageIncludedEstimate: true
+    )
 }
