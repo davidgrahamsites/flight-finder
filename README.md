@@ -57,6 +57,18 @@ xcodebuild -project FlightFinder.xcodeproj \
   test
 ```
 
+## Release Packaging
+
+Build an unsigned macOS release bundle (app + zip + sha256):
+
+```bash
+./scripts/build_release_bundle.sh --clean
+```
+
+Release runbook (including signing/notarization path):
+
+- `docs/RELEASE.md`
+
 ## Skills Integration
 
 This repo includes skill-oriented tooling aligned to the VoltAgent skills catalog:
@@ -70,6 +82,7 @@ This repo includes skill-oriented tooling aligned to the VoltAgent skills catalo
 - `config/awesome-skills.official.manifest.json` is a generated snapshot from the official scope.
 - `scripts/validate_with_skills.sh` runs build/test verification plus optional browser checks.
 - `scripts/provider_smoke_playwright.mjs` performs provider reachability smoke tests.
+- `scripts/build_release_bundle.sh` builds versioned unsigned release artifacts for macOS.
 - `docs/SKILLS_PLAYBOOK.md` explains skill usage and workflow.
 
 ## Notes

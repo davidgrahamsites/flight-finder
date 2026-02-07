@@ -449,7 +449,7 @@ struct FlightFinderView: View {
                                     .controlSize(.small)
                                     .tint(.white)
                             }
-                            Text(viewModel.isSearching ? "Searching..." : "Find Best Flights")
+                            Text(searchButtonTitle)
                                 .font(outfit(size: 14, weight: .bold))
                         }
                         .frame(maxWidth: .infinity)
@@ -681,6 +681,11 @@ struct FlightFinderView: View {
 
                 if let session = viewModel.sessionResult {
                     SessionObservabilityCard(session: session)
+                    ResultsQuickStatsStrip(
+                        session: session,
+                        options: viewModel.options,
+                        alertCount: viewModel.watchlistAlerts.count
+                    )
 
                     PosterSection(
                         title: "Results View",
@@ -769,6 +774,13 @@ struct FlightFinderView: View {
         .scrollIndicators(.hidden)
     }
 
+    private var searchButtonTitle: String {
+        if viewModel.isSearching {
+            return "Searching..."
+        }
+        return "Find \(viewModel.options.rankingMode.title) Flights"
+    }
+
     private var loginPromptMessage: String {
         guard let offer = viewModel.pendingLoginOffer else {
             return "This provider requires login before booking."
@@ -821,6 +833,7 @@ private struct PosterSection<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(background)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .hoverLift(1.004)
     }
 }
 
@@ -1155,6 +1168,7 @@ private struct RouteResultCard: View {
                 }
             }
         }
+        .hoverLift(1.006)
     }
 }
 
@@ -1248,6 +1262,7 @@ private struct OfferRow: View {
         .padding(10)
         .background(FlightFinderTheme.muted)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .hoverLift(1.008)
     }
 }
 
@@ -1337,6 +1352,7 @@ private struct WatchlistRow: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(FlightFinderTheme.border, lineWidth: 2)
         )
+        .hoverLift(1.008)
     }
 }
 
@@ -1381,5 +1397,101 @@ private struct WatchlistAlertRow: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(FlightFinderTheme.border, lineWidth: 2)
         )
+        .hoverLift(1.008)
+    }
+}
+
+private struct ResultsQuickStatsStrip: View {
+    let session: SearchSessionResult
+    let options: FlightSearchOptions
+    let alertCount: Int
+
+    private var pricedOffers: [FlightOffer] {
+        session.routes
+            .flatMap(\.offers)
+            .filter { $0.status == .priced && $0.totalPrice != nil }
+    }
+
+    private var bestFareText: String {
+        guard
+            let best = pricedOffers.min(by: { ($0.totalPrice ?? .greatestFiniteMagnitude) < ($1.totalPrice ?? .greatestFiniteMagnitude) }),
+            let price = best.totalPrice
+        else {
+            return "N/A"
+        }
+        return "\(best.currencyCode) \(price.formatted(.number.precision(.fractionLength(0...2))))"
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ResultsStatBlock(
+                label: "Mode",
+                value: options.rankingMode.title,
+                background: FlightFinderTheme.primary.opacity(0.14),
+                foreground: FlightFinderTheme.primary
+            )
+            ResultsStatBlock(
+                label: "Best Fare",
+                value: bestFareText,
+                background: FlightFinderTheme.accent.opacity(0.18),
+                foreground: FlightFinderTheme.foreground
+            )
+            ResultsStatBlock(
+                label: "Priced",
+                value: "\(pricedOffers.count)",
+                background: FlightFinderTheme.secondary.opacity(0.16),
+                foreground: FlightFinderTheme.secondary
+            )
+            ResultsStatBlock(
+                label: "Alerts",
+                value: "\(alertCount)",
+                background: Color.red.opacity(0.14),
+                foreground: Color.red
+            )
+        }
+    }
+}
+
+private struct ResultsStatBlock: View {
+    let label: String
+    let value: String
+    let background: Color
+    let foreground: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label.uppercased())
+                .font(Font.custom("Outfit", size: 10).weight(.semibold))
+                .tracking(0.9)
+                .foregroundStyle(foreground.opacity(0.85))
+            Text(value)
+                .font(Font.custom("Outfit", size: 14).weight(.black))
+                .foregroundStyle(FlightFinderTheme.foreground)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(background)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private struct HoverLiftModifier: ViewModifier {
+    let scale: CGFloat
+    @State private var isHovered = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isHovered ? scale : 1)
+            .animation(.easeOut(duration: 0.18), value: isHovered)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+    }
+}
+
+private extension View {
+    func hoverLift(_ scale: CGFloat = 1.006) -> some View {
+        modifier(HoverLiftModifier(scale: scale))
     }
 }

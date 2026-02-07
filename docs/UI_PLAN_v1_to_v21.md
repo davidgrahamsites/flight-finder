@@ -32,3 +32,8 @@
 - Strong color blocking with no shadows.
 - Fast scan, fast edit, fast launch workflow.
 - Functional parity with clearer hierarchy and a more distinctive brand identity.
+
+## Post-v21 Polish
+1. Added hover-lift interaction feedback for sections and result/watchlist rows (no shadows, scale-only).
+2. Added results quick-stats strip (mode, best fare, priced count, alerts) for at-a-glance scanning.
+3. Updated search CTA copy to reflect selected ranking mode.

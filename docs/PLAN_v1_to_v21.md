@@ -43,3 +43,4 @@
 8. Results panel filter controls (status + row cap) with deterministic view-model behavior: complete
 9. Skills catalog integration expanded to live Awesome Agent Skills parser + scoped installers (official/all): complete
 10. Ranking mode selection (`Best`, `Cheapest`, `Fastest`) with backward-compatible saved-options decoding: complete
+11. Optional polish/release phase: interaction polish + versioned macOS release bundling workflow + release runbook: complete
