@@ -5,6 +5,38 @@ struct SavedSearchConfig: Codable, Hashable {
     var options: FlightSearchOptions
     var enabledKinds: Set<ProviderKind>
     var lastPreset: SearchPreset?
+    var watchlist: [WatchCandidate]
+
+    init(
+        routes: [RouteInputState],
+        options: FlightSearchOptions,
+        enabledKinds: Set<ProviderKind>,
+        lastPreset: SearchPreset?,
+        watchlist: [WatchCandidate] = []
+    ) {
+        self.routes = routes
+        self.options = options
+        self.enabledKinds = enabledKinds
+        self.lastPreset = lastPreset
+        self.watchlist = watchlist
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case routes
+        case options
+        case enabledKinds
+        case lastPreset
+        case watchlist
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.routes = try container.decode([RouteInputState].self, forKey: .routes)
+        self.options = try container.decode(FlightSearchOptions.self, forKey: .options)
+        self.enabledKinds = try container.decode(Set<ProviderKind>.self, forKey: .enabledKinds)
+        self.lastPreset = try container.decodeIfPresent(SearchPreset.self, forKey: .lastPreset)
+        self.watchlist = try container.decodeIfPresent([WatchCandidate].self, forKey: .watchlist) ?? []
+    }
 }
 
 protocol SearchPreferencesStore {

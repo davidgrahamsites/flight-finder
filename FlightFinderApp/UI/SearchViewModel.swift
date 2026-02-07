@@ -6,6 +6,7 @@ final class SearchViewModel: ObservableObject {
     @Published var options: FlightSearchOptions
     @Published var enabledKinds: Set<ProviderKind>
     @Published var selectedPreset: SearchPreset?
+    @Published var watchlist: [WatchCandidate]
 
     @Published var isSearching = false
     @Published var progressByRoute: [String: SearchProgress] = [:]
@@ -25,6 +26,7 @@ final class SearchViewModel: ObservableObject {
         self.enabledKinds = Set(ProviderKind.allCases)
         self.routes = [RouteInputState(origin: "SFO", destination: "LAX")]
         self.selectedPreset = nil
+        self.watchlist = []
         restoreDefaultsIfAvailable()
     }
 
@@ -52,6 +54,61 @@ final class SearchViewModel: ObservableObject {
         searchError = nil
     }
 
+    func removeWatchCandidate(id: UUID) {
+        watchlist.removeAll { $0.id == id }
+        saveDefaults()
+    }
+
+    @discardableResult
+    func mergeWatchCandidates(_ candidates: [WatchCandidate]) -> Int {
+        guard !candidates.isEmpty else { return 0 }
+
+        var indexByKey: [String: Int] = [:]
+        var merged = watchlist
+        for (index, existing) in merged.enumerated() {
+            indexByKey["\(existing.routeKey)|\(existing.providerID)"] = index
+        }
+
+        var changedCount = 0
+        for candidate in candidates {
+            let key = "\(candidate.routeKey)|\(candidate.providerID)"
+            if let existingIndex = indexByKey[key] {
+                let existing = merged[existingIndex]
+                let updated = WatchCandidate(
+                    id: existing.id,
+                    routeKey: candidate.routeKey,
+                    providerID: candidate.providerID,
+                    providerName: candidate.providerName,
+                    deepLink: candidate.deepLink,
+                    currencyCode: candidate.currencyCode,
+                    observedPrice: candidate.observedPrice,
+                    targetPrice: min(existing.targetPrice, candidate.targetPrice),
+                    lastSeenAt: max(existing.lastSeenAt, candidate.lastSeenAt)
+                )
+                if updated != existing {
+                    merged[existingIndex] = updated
+                    changedCount += 1
+                }
+            } else {
+                merged.append(candidate)
+                indexByKey[key] = merged.count - 1
+                changedCount += 1
+            }
+        }
+
+        if changedCount > 0 {
+            watchlist = merged.sorted { lhs, rhs in
+                if lhs.lastSeenAt == rhs.lastSeenAt {
+                    return lhs.routeKey < rhs.routeKey
+                }
+                return lhs.lastSeenAt > rhs.lastSeenAt
+            }
+            saveDefaults()
+        }
+
+        return changedCount
+    }
+
     func applyPreset(_ preset: SearchPreset) {
         routes = preset.makeRoutes()
         options.tripType = preset.defaultTripType
@@ -68,7 +125,8 @@ final class SearchViewModel: ObservableObject {
             routes: persistedRoutes,
             options: options,
             enabledKinds: enabledKinds,
-            lastPreset: lastPreset ?? selectedPreset
+            lastPreset: lastPreset ?? selectedPreset,
+            watchlist: watchlist
         )
         preferencesStore.save(config)
     }
@@ -88,6 +146,7 @@ final class SearchViewModel: ObservableObject {
                 }
             }
             sessionResult = result
+            mergeWatchCandidates(result.watchCandidates)
             saveDefaults()
         } catch {
             sessionResult = nil
@@ -108,5 +167,11 @@ final class SearchViewModel: ObservableObject {
         options = saved.options
         enabledKinds = saved.enabledKinds.isEmpty ? Set(ProviderKind.allCases) : saved.enabledKinds
         selectedPreset = saved.lastPreset
+        watchlist = saved.watchlist.sorted { lhs, rhs in
+            if lhs.lastSeenAt == rhs.lastSeenAt {
+                return lhs.routeKey < rhs.routeKey
+            }
+            return lhs.lastSeenAt > rhs.lastSeenAt
+        }
     }
 }

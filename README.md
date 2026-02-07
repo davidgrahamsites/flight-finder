@@ -14,7 +14,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Cross-source offer deduplication before ranking.
 - Session and route observability counters (attempts, dedupe counts, status mix, average latency).
 - Offer-level audit trail metadata path (provider mode/status/timing per attempt).
-- Watchlist-ready candidate generation from best priced route offers.
+- Persistent watchlist entries with merge/update behavior from best priced route offers.
 - Status-aware outputs: priced, handoff required, login required, unavailable.
 
 ## UI System

@@ -1,6 +1,6 @@
 import Foundation
 
-struct WatchCandidate: Hashable, Identifiable {
+struct WatchCandidate: Codable, Hashable, Identifiable {
     var id: UUID = UUID()
     var routeKey: String
     var providerID: String

@@ -37,6 +37,7 @@ struct FlightFinderView: View {
                 searchOptionsSection
                 providerKindsSection
                 actionSection
+                watchlistSection
             }
             .padding(20)
         }
@@ -386,6 +387,37 @@ struct FlightFinderView: View {
                             .background(.white.opacity(0.09))
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private var watchlistSection: some View {
+        PosterSection(
+            title: "Watchlist",
+            subtitle: "Persisted targets from best priced offers. Update automatically after each search.",
+            background: Color(hex: 0xFFFBEB)
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                if let session = viewModel.sessionResult, !session.watchCandidates.isEmpty {
+                    Button("Merge Latest Candidates (\(session.watchCandidates.count))") {
+                        viewModel.mergeWatchCandidates(session.watchCandidates)
+                    }
+                    .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.accent))
+                }
+
+                if viewModel.watchlist.isEmpty {
+                    Text("No watchlist entries yet. Run a search and merge candidates from results.")
+                        .font(outfit(size: 13, weight: .regular))
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
+                } else {
+                    ForEach(viewModel.watchlist.prefix(20)) { candidate in
+                        WatchlistRow(
+                            candidate: candidate,
+                            onOpen: { NSWorkspace.shared.open(candidate.deepLink) },
+                            onRemove: { viewModel.removeWatchCandidate(id: candidate.id) }
+                        )
                     }
                 }
             }
@@ -943,5 +975,50 @@ private struct ObservabilityChip: View {
         .padding(.horizontal, 10)
         .background(FlightFinderTheme.muted)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private struct WatchlistRow: View {
+    let candidate: WatchCandidate
+    let onOpen: () -> Void
+    let onRemove: () -> Void
+
+    private var dropPercent: Double {
+        guard candidate.observedPrice > 0 else { return 0 }
+        return max(0, (candidate.observedPrice - candidate.targetPrice) / candidate.observedPrice)
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(candidate.routeKey) • \(candidate.providerName)")
+                    .font(Font.custom("Outfit", size: 13).weight(.bold))
+
+                Text("Observed: \(candidate.currencyCode) \(candidate.observedPrice, format: .number.precision(.fractionLength(0...2)))  •  Target: \(candidate.currencyCode) \(candidate.targetPrice, format: .number.precision(.fractionLength(0...2)))")
+                    .font(Font.custom("Outfit", size: 12).weight(.medium))
+                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
+
+                Text("Target drop: \((dropPercent * 100), format: .number.precision(.fractionLength(0...1)))%")
+                    .font(Font.custom("Outfit", size: 11).weight(.semibold))
+                    .foregroundStyle(FlightFinderTheme.accent)
+            }
+
+            Spacer(minLength: 0)
+
+            HStack(spacing: 6) {
+                Button("Open", action: onOpen)
+                    .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.primary))
+
+                Button("Remove", role: .destructive, action: onRemove)
+                    .buttonStyle(OutlinePosterButtonStyle(color: .red))
+            }
+        }
+        .padding(10)
+        .background(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(FlightFinderTheme.border, lineWidth: 2)
+        )
     }
 }
