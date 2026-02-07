@@ -279,6 +279,51 @@ struct FlightFinderCoreTests {
         #expect(blocked?.totalChecks == 1)
         #expect((reachable?.successRate ?? 0) > (blocked?.successRate ?? 1))
     }
+
+    @Test("Coordinator returns a route result for each requested route")
+    func coordinatorSearchesAllConfiguredRoutes() async throws {
+        let provider = makeProvider(
+            id: "handoff-provider",
+            name: "Handoff Provider",
+            homepage: URL(string: "https://example.com/flights")!,
+            kind: .metasearch,
+            seedReachability: 0.8
+        )
+
+        let coordinator = FlightSearchCoordinator(
+            providers: [provider],
+            httpClient: ProviderHTTPClient(),
+            ranking: OfferRankingService(),
+            normalizer: CurrencyNormalizer()
+        )
+
+        let firstRoute = RouteRequest(
+            origin: "SFO",
+            destination: "PVG",
+            departureDate: Date(timeIntervalSince1970: 1_720_000_000)
+        )
+        let secondRoute = RouteRequest(
+            origin: "PDX",
+            destination: "PVG",
+            departureDate: Date(timeIntervalSince1970: 1_720_086_400)
+        )
+
+        var options = FlightSearchOptions.default
+        options.tripType = .oneWay
+
+        let request = SearchRequest(
+            routes: [firstRoute, secondRoute],
+            options: options,
+            enabledKinds: [.metasearch]
+        )
+
+        let result = try await coordinator.search(request: request) { _ in }
+        let routeKeys = Set(result.routes.map(\.route.routeKey))
+
+        #expect(result.routes.count == 2)
+        #expect(routeKeys.contains(firstRoute.routeKey))
+        #expect(routeKeys.contains(secondRoute.routeKey))
+    }
 }
 
 private func makeProvider(

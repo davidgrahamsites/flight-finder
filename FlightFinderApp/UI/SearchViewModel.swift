@@ -179,11 +179,7 @@ final class SearchViewModel: ObservableObject {
     }
 
     func handleOfferOpenRequest(_ offer: FlightOffer) {
-        if offer.status == .loginRequired {
-            pendingLoginOffer = offer
-            return
-        }
-
+        pendingLoginOffer = nil
         offerOpenClient.open(url: offer.deepLink)
     }
 

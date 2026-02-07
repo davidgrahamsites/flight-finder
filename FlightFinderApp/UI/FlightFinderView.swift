@@ -377,20 +377,27 @@ struct FlightFinderView: View {
                 .font(outfit(size: 13, weight: .medium))
 
                 HStack(spacing: 12) {
-                    Picker(
-                        "Max Stops",
-                        selection: Binding(
-                            get: { viewModel.options.maxStops ?? -1 },
-                            set: { viewModel.options.maxStops = $0 < 0 ? nil : $0 }
-                        )
-                    ) {
-                        Text("Any").tag(-1)
-                        Text("0").tag(0)
-                        Text("1").tag(1)
-                        Text("2").tag(2)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Max Stops")
+                            .font(outfit(size: 12, weight: .semibold))
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
+
+                        Picker(
+                            "Max Stops",
+                            selection: Binding(
+                                get: { viewModel.options.maxStops ?? -1 },
+                                set: { viewModel.options.maxStops = $0 < 0 ? nil : $0 }
+                            )
+                        ) {
+                            Text("Any").tag(-1)
+                            Text("0").tag(0)
+                            Text("1").tag(1)
+                            Text("2").tag(2)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 190)
                     }
-                    .pickerStyle(.segmented)
-                    .frame(width: 190)
 
                     Stepper("Flexible Days: ±\(viewModel.options.flexibleDays)", value: $viewModel.options.flexibleDays, in: 0...7)
                         .font(outfit(size: 13, weight: .medium))
@@ -645,11 +652,11 @@ struct FlightFinderView: View {
                             .tracking(1.5)
                             .foregroundStyle(.white.opacity(0.94))
 
-                        Text(viewModel.sessionResult == nil ? "No search has been run yet" : "Best offers ranked and ready")
+                        Text(resultsHeroTitle)
                             .font(outfit(size: 28, weight: .black))
                             .foregroundStyle(.white)
 
-                        Text("Open any offer to complete booking directly on the provider website.")
+                        Text(resultsHeroSubtitle)
                             .font(outfit(size: 13, weight: .regular))
                             .foregroundStyle(.white.opacity(0.92))
                     }
@@ -776,6 +783,22 @@ struct FlightFinderView: View {
             return "Searching..."
         }
         return "Find \(viewModel.options.rankingMode.title) Flights"
+    }
+
+    private var resultsHeroTitle: String {
+        guard let session = viewModel.sessionResult else {
+            return "No search has been run yet"
+        }
+        let count = session.routes.count
+        return "\(count) route\(count == 1 ? "" : "s") searched"
+    }
+
+    private var resultsHeroSubtitle: String {
+        guard let session = viewModel.sessionResult else {
+            return "Open any offer to complete booking directly on the provider website."
+        }
+        let keys = session.routes.map(\.route.routeKey).joined(separator: "  •  ")
+        return keys
     }
 
     private var loginPromptMessage: String {
@@ -1046,19 +1069,30 @@ private struct FlatTextInput: View {
     var showsAirportSuggestions: Bool = false
 
     @FocusState private var isFocused: Bool
-    @State private var showsSuggestionsPopover = false
+    @State private var suggestionPresenter = AirportSuggestionPresenter()
+    @State private var dismissTask: Task<Void, Never>?
 
     private var suggestions: [AirportOption] {
         guard showsAirportSuggestions else { return [] }
         return AirportDirectory.suggestions(matching: text, limit: 8)
     }
 
-    private func refreshSuggestionsPopover() {
-        guard showsAirportSuggestions, isFocused, !disabled else {
-            showsSuggestionsPopover = false
-            return
+    private func refreshSuggestionPanel() {
+        suggestionPresenter.updateForInput(
+            isEnabled: showsAirportSuggestions,
+            isDisabled: disabled,
+            hasFocus: isFocused,
+            suggestionCount: suggestions.count
+        )
+    }
+
+    private func scheduleDismissAfterBlur() {
+        dismissTask?.cancel()
+        dismissTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 180_000_000)
+            guard !isFocused else { return }
+            suggestionPresenter.dismiss()
         }
-        showsSuggestionsPopover = !suggestions.isEmpty
     }
 
     var body: some View {
@@ -1089,58 +1123,82 @@ private struct FlatTextInput: View {
                 .focused($isFocused)
                 .disabled(disabled)
                 .onAppear {
-                    refreshSuggestionsPopover()
+                    refreshSuggestionPanel()
                 }
                 .onChange(of: isFocused) { _, _ in
-                    refreshSuggestionsPopover()
-                }
-                .onChange(of: text) { _, _ in
-                    refreshSuggestionsPopover()
-                }
-                .popover(isPresented: $showsSuggestionsPopover, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
-                    AirportSuggestionsPopover(suggestions: suggestions) { airport in
-                        text = airport.code
-                        showsSuggestionsPopover = false
+                    if isFocused {
+                        dismissTask?.cancel()
+                        refreshSuggestionPanel()
+                    } else {
+                        scheduleDismissAfterBlur()
                     }
                 }
+                .onChange(of: text) { _, _ in
+                    dismissTask?.cancel()
+                    refreshSuggestionPanel()
+                }
+                .onChange(of: disabled) { _, _ in
+                    dismissTask?.cancel()
+                    refreshSuggestionPanel()
+                }
+
+            if suggestionPresenter.isVisible && !suggestions.isEmpty {
+                AirportSuggestionsMenu(suggestions: suggestions) { airport in
+                    dismissTask?.cancel()
+                    suggestionPresenter.dismiss()
+                    isFocused = false
+                    text = airport.code
+                }
+                .transition(.opacity)
+            }
         }
+        .onDisappear {
+            dismissTask?.cancel()
+        }
+        .animation(.easeOut(duration: 0.12), value: suggestionPresenter.isVisible)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-private struct AirportSuggestionsPopover: View {
+private struct AirportSuggestionsMenu: View {
     let suggestions: [AirportOption]
     let onSelect: (AirportOption) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, airport in
-                Button {
-                    onSelect(airport)
-                } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(airport.city) (\(airport.code))")
-                            .font(Font.custom("Outfit", size: 13).weight(.bold))
-                            .foregroundStyle(FlightFinderTheme.foreground)
-                        Text("\(airport.name) • \(airport.country)")
-                            .font(Font.custom("Outfit", size: 11).weight(.medium))
-                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.74))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, airport in
+                    Button {
+                        onSelect(airport)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(airport.city) (\(airport.code))")
+                                .font(Font.custom("Outfit", size: 13).weight(.bold))
+                                .foregroundStyle(FlightFinderTheme.foreground)
+                            Text("\(airport.name) • \(airport.country)")
+                                .font(Font.custom("Outfit", size: 11).weight(.medium))
+                                .foregroundStyle(FlightFinderTheme.foreground.opacity(0.74))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 7)
+                        .padding(.horizontal, 10)
+                        .contentShape(Rectangle())
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 7)
-                    .padding(.horizontal, 10)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                    .buttonStyle(.plain)
 
-                if index < suggestions.count - 1 {
-                    Divider()
+                    if index < suggestions.count - 1 {
+                        Divider()
+                    }
                 }
             }
         }
-        .frame(width: 320)
-        .padding(6)
+        .frame(maxHeight: 180)
         .background(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(FlightFinderTheme.border, lineWidth: 2)
+        )
     }
 }
 

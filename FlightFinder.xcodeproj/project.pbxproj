@@ -12,11 +12,13 @@
 		053FECC21C55EDA46212E6F5 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A55FF94DB0212A33DEF7BC /* SearchViewModel.swift */; };
 		076D01E187B18DAA3A64E97D /* PriceExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDABD52AA1D8ABE1979C0A27 /* PriceExtraction.swift */; };
 		1BD683A1995FEAA3A866082A /* FlightOffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB8910700A267C8BBC9B6C2A /* FlightOffer.swift */; };
+		2E7E3377BE711490A76A11CD /* AirportSuggestionPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34ACC1B194037977BA6F3B23 /* AirportSuggestionPresenter.swift */; };
 		3092155C9EE4F96900AE7711 /* WatchlistRecheckPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA04307E690399A3708BC83C /* WatchlistRecheckPlan.swift */; };
 		30C80358757208BEE1B5EBB0 /* RouteInputState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9F0BAB31D493C5F72EB0268 /* RouteInputState.swift */; };
 		3638A6BB206B5261547DA8A7 /* SearchPreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F1D0D5CFE18E0358EDEA62E /* SearchPreferencesStore.swift */; };
 		3640178168EEDB40C88FB8AB /* FlightFinderCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D043D48F79FDC773DA4FF663 /* FlightFinderCoreTests.swift */; };
 		3674AF792AE170158B44564E /* OfferOpenClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B930C2A91453FBE6967CF2E0 /* OfferOpenClient.swift */; };
+		3CC8DAEB23CC807D382993B9 /* AirportSuggestionPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB63E6CA455CA178938E0DFD /* AirportSuggestionPresenterTests.swift */; };
 		3D5894A81F3EF8E0B7699B19 /* ProviderDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5AB86D49C9147A9AEF7DD32 /* ProviderDescriptor.swift */; };
 		3F0C5DBF4CEAC0F94E0E40AD /* ProviderAccessLearningStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730DC661A3691CD103B060C8 /* ProviderAccessLearningStore.swift */; };
 		42182DD1A53C6905D03D6743 /* TripType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 533599F79905E68020CBB39A /* TripType.swift */; };
@@ -76,6 +78,7 @@
 		1F1D0D5CFE18E0358EDEA62E /* SearchPreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPreferencesStore.swift; sourceTree = "<group>"; };
 		2130A572BB36320915F48DAE /* URLTemplateFlightProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLTemplateFlightProvider.swift; sourceTree = "<group>"; };
 		2980D00014B154383B965731 /* FlightFinderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightFinderView.swift; sourceTree = "<group>"; };
+		34ACC1B194037977BA6F3B23 /* AirportSuggestionPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirportSuggestionPresenter.swift; sourceTree = "<group>"; };
 		3EAFA5FF64BA7BC2FC8B1ADF /* Outfit-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Outfit-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		41672B6E95AF8730169447A5 /* FlightFinderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightFinderApp.swift; sourceTree = "<group>"; };
 		49B5E2B6DD1E60FDC222159D /* AppFontLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFontLoader.swift; sourceTree = "<group>"; };
@@ -101,6 +104,7 @@
 		9A84509D15CF8AA6648525A1 /* ProviderRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderRegistry.swift; sourceTree = "<group>"; };
 		9BCBA96EDE4AD77898A6C666 /* SearchRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchRequest.swift; sourceTree = "<group>"; };
 		9CD22803B01C69E0D918874E /* FlightSearchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightSearchCoordinator.swift; sourceTree = "<group>"; };
+		AB63E6CA455CA178938E0DFD /* AirportSuggestionPresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirportSuggestionPresenterTests.swift; sourceTree = "<group>"; };
 		ACE1ECF5EFAC19F3A66BED84 /* DateFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatting.swift; sourceTree = "<group>"; };
 		B0F1F90D944C57EE3E98D130 /* ProviderKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderKind.swift; sourceTree = "<group>"; };
 		B53BEE686B119D294DE2CFE1 /* ChinaAccessibilityPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChinaAccessibilityPlanner.swift; sourceTree = "<group>"; };
@@ -215,6 +219,7 @@
 			isa = PBXGroup;
 			children = (
 				FCC1E22BF914D97CB96EEEC2 /* AirportDirectory.swift */,
+				34ACC1B194037977BA6F3B23 /* AirportSuggestionPresenter.swift */,
 				97B8CB60085ACCF8E3E44BAB /* BagPolicy.swift */,
 				513F1AC7D636E9D8FF552DCF /* CabinClass.swift */,
 				FB8910700A267C8BBC9B6C2A /* FlightOffer.swift */,
@@ -253,6 +258,7 @@
 			isa = PBXGroup;
 			children = (
 				8F8123DCA93C6C91BBF96C3A /* AirportDirectoryTests.swift */,
+				AB63E6CA455CA178938E0DFD /* AirportSuggestionPresenterTests.swift */,
 				D043D48F79FDC773DA4FF663 /* FlightFinderCoreTests.swift */,
 				64C32D503836B51939680691 /* SearchAnalyticsTests.swift */,
 				69AEC3D2FC85FFB0E62385B7 /* SearchViewModelTests.swift */,
@@ -366,6 +372,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9CACCA638739F094F8952AB4 /* AirportDirectory.swift in Sources */,
+				2E7E3377BE711490A76A11CD /* AirportSuggestionPresenter.swift in Sources */,
 				8BFF7CC59AF3FFC7687503D5 /* AppFontLoader.swift in Sources */,
 				9570D69D687E721F8BF50C68 /* BagPolicy.swift in Sources */,
 				D16FC68B16C2C5BBCF6461BE /* CabinClass.swift in Sources */,
@@ -418,6 +425,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D0BD9EB17072A84E05D92669 /* AirportDirectoryTests.swift in Sources */,
+				3CC8DAEB23CC807D382993B9 /* AirportSuggestionPresenterTests.swift in Sources */,
 				3640178168EEDB40C88FB8AB /* FlightFinderCoreTests.swift in Sources */,
 				530F03D1EE6B880D0D744024 /* SearchAnalyticsTests.swift in Sources */,
 				C4041A82E59F22C3529AC961 /* SearchViewModelTests.swift in Sources */,

@@ -713,8 +713,8 @@ struct SearchViewModelTests {
         #expect(second.chinaSweepIncludesAllProviders == true)
     }
 
-    @Test("Login-required offer prompts before opening")
-    func loginRequiredOfferPromptsBeforeOpen() {
+    @Test("Login-required offer opens immediately for manual sign-in")
+    func loginRequiredOfferOpensImmediately() {
         let store = InMemorySearchPreferencesStore()
         let opener = RecordingOfferOpenClient()
         let viewModel = SearchViewModel(
@@ -726,10 +726,6 @@ struct SearchViewModelTests {
         let offer = makeOffer(status: .loginRequired, deepLink: URL(string: "https://example.com/login")!)
         viewModel.handleOfferOpenRequest(offer)
 
-        #expect(viewModel.pendingLoginOffer?.id == offer.id)
-        #expect(opener.openedURLs.isEmpty)
-
-        viewModel.confirmLoginAndOpenPendingOffer()
         #expect(viewModel.pendingLoginOffer == nil)
         #expect(opener.openedURLs == [URL(string: "https://example.com/login")!])
     }
