@@ -37,3 +37,4 @@
 2. Watchlist observed-price refresh from matching priced offers: complete
 3. Watchlist re-check planning and execution flow (trip-type aware, 3-route bounded): complete
 4. Auto watchlist re-check scheduler + local notification dispatch pipeline: complete
+5. China accessibility diagnostics sweep + ranked snapshot panel in UI (deterministic, no AI): complete

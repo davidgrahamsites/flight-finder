@@ -18,6 +18,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - In-app watchlist target-hit alerts with open/dismiss controls and auto-refresh of observed prices.
 - One-click watchlist re-check planner (trip-type aware, deterministic, capped to 3 concurrent routes).
 - Optional auto watchlist re-check scheduler (configurable interval) with local desktop target-hit notifications.
+- China accessibility diagnostics panel with one-click probe sweeps and ranked reachability snapshots by provider.
 - Status-aware outputs: priced, handoff required, login required, unavailable.
 
 ## UI System
@@ -33,6 +34,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Learns without AI models using deterministic scoring from observed probe success/failure.
 - Prioritizes and filters providers using blended seed + learned reachability.
 - Surfaces China reachability score in results.
+- Adds an explicit "Probe Sites" sweep to test currently enabled provider categories and update local learning stats.
 
 ## Provider Coverage
 

@@ -227,13 +227,70 @@ struct FlightFinderView: View {
                 .disabled(viewModel.isSearching)
 
                 if viewModel.options.siteAccessMode == .chinaAccessible {
-                    Text("China mode probes accessibility and updates reliability scores over time without calling any AI model.")
-                        .font(outfit(size: 12, weight: .medium))
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("China mode probes accessibility and updates reliability scores over time without calling any AI model.")
+                            .font(outfit(size: 12, weight: .medium))
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(FlightFinderTheme.secondary.opacity(0.15))
+                            .foregroundStyle(FlightFinderTheme.foreground)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("China Accessibility Snapshot")
+                                    .font(outfit(size: 12, weight: .semibold))
+                                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
+
+                                Spacer()
+
+                                Button {
+                                    Task {
+                                        await viewModel.runChinaAccessibilitySweep()
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        if viewModel.isRunningChinaAccessibilitySweep {
+                                            ProgressView()
+                                                .controlSize(.small)
+                                        }
+                                        Text(viewModel.isRunningChinaAccessibilitySweep ? "Probing..." : "Probe Sites")
+                                    }
+                                }
+                                .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.secondary))
+                                .disabled(viewModel.isRunningChinaAccessibilitySweep || viewModel.isSearching)
+                            }
+
+                            if let summary = viewModel.chinaAccessSummary, !summary.isEmpty {
+                                Text(summary)
+                                    .font(outfit(size: 11, weight: .medium))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 8)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(FlightFinderTheme.accent.opacity(0.16))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            }
+
+                            if viewModel.chinaAccessSnapshots.isEmpty {
+                                Text("No reachability stats yet. Run a probe to learn which sites are reachable from China.")
+                                    .font(outfit(size: 12, weight: .regular))
+                                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+                            } else {
+                                VStack(spacing: 6) {
+                                    ForEach(viewModel.chinaAccessSnapshots.prefix(8)) { snapshot in
+                                        ChinaAccessibilityRow(snapshot: snapshot)
+                                    }
+                                }
+                            }
+                        }
                         .padding(10)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(FlightFinderTheme.secondary.opacity(0.15))
-                        .foregroundStyle(FlightFinderTheme.foreground)
+                        .background(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(FlightFinderTheme.border, lineWidth: 2)
+                        )
+                    }
                 }
 
                 HStack(alignment: .top, spacing: 10) {
@@ -297,6 +354,12 @@ struct FlightFinderView: View {
                         .font(outfit(size: 13, weight: .medium))
                 }
                 .disabled(viewModel.isSearching)
+            }
+        }
+        .onChange(of: viewModel.options.siteAccessMode) { _, mode in
+            guard mode == .chinaAccessible else { return }
+            Task {
+                await viewModel.refreshChinaAccessibilitySnapshot()
             }
         }
     }
@@ -893,6 +956,49 @@ private struct ToggleChip: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct ChinaAccessibilityRow: View {
+    let snapshot: ChinaAccessibilityPlanner.ProviderSnapshot
+
+    private var kindText: String {
+        switch snapshot.providerKind {
+        case .airline:
+            return "Airline"
+        case .metasearch:
+            return "Metasearch"
+        case .ota:
+            return "OTA"
+        case .chinaPortal:
+            return "China Portal"
+        }
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(snapshot.providerName)
+                    .font(Font.custom("Outfit", size: 12).weight(.semibold))
+
+                Text("\(kindText) • checks: \(snapshot.totalChecks)")
+                    .font(Font.custom("Outfit", size: 10).weight(.medium))
+                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.65))
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Score \(snapshot.blendedScore, format: .number.precision(.fractionLength(2)))")
+                    .font(Font.custom("Outfit", size: 11).weight(.bold))
+                Text("Success \(snapshot.successRate, format: .percent.precision(.fractionLength(0)))")
+                    .font(Font.custom("Outfit", size: 10).weight(.medium))
+                    .foregroundStyle(FlightFinderTheme.foreground.opacity(0.68))
+            }
+        }
+        .padding(8)
+        .background(FlightFinderTheme.muted)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 

@@ -582,6 +582,61 @@ struct SearchViewModelTests {
         viewModel.processSessionResult(session, observedAt: later)
         #expect(notificationClient.capturedAlerts.count == 1)
     }
+
+    @Test("China accessibility sweep updates summary and snapshots for enabled kinds")
+    func chinaAccessibilitySweepUpdatesViewModelState() async {
+        let store = InMemorySearchPreferencesStore()
+        let reachableURL = URL(string: "https://reachable.example")!
+        let blockedURL = URL(string: "https://blocked.example")!
+
+        let providers = [
+            makeProvider(
+                id: "reachable-provider",
+                name: "Reachable Provider",
+                homepage: reachableURL,
+                kind: .chinaPortal,
+                seedReachability: 0.9
+            ),
+            makeProvider(
+                id: "blocked-provider",
+                name: "Blocked Provider",
+                homepage: blockedURL,
+                kind: .metasearch,
+                seedReachability: 0.1
+            )
+        ]
+
+        let planner = ChinaAccessibilityPlanner(
+            learningStore: ProviderAccessLearningStore(filename: "provider_access_stats_test_\(UUID().uuidString).json"),
+            reachabilityProber: StubReachabilityProber(
+                resultsByURL: [
+                    reachableURL: true,
+                    blockedURL: false
+                ]
+            )
+        )
+        let coordinator = FlightSearchCoordinator(
+            providers: providers,
+            httpClient: ProviderHTTPClient(),
+            ranking: OfferRankingService(),
+            normalizer: CurrencyNormalizer(),
+            chinaPlanner: planner
+        )
+        let viewModel = SearchViewModel(
+            coordinator: coordinator,
+            preferencesStore: store
+        )
+
+        viewModel.enabledKinds = [.chinaPortal]
+        await viewModel.runChinaAccessibilitySweep()
+
+        #expect(viewModel.isRunningChinaAccessibilitySweep == false)
+        #expect(viewModel.chinaAccessSnapshots.count == 1)
+        #expect(viewModel.chinaAccessSnapshots.first?.providerID == "reachable-provider")
+        #expect(viewModel.chinaAccessSummary?.contains("Probed 1 provider") == true)
+        #expect(viewModel.chinaAccessSummary?.contains("1 reachable") == true)
+        #expect(viewModel.chinaAccessSummary?.contains("0 blocked") == true)
+    }
 }
 
 private final class InMemorySearchPreferencesStore: SearchPreferencesStore {
@@ -601,5 +656,35 @@ private final class RecordingWatchlistNotificationClient: WatchlistNotificationC
 
     func notifyTargetHitAlerts(_ alerts: [WatchlistAlert]) {
         capturedAlerts.append(contentsOf: alerts)
+    }
+}
+
+private func makeProvider(
+    id: String,
+    name: String,
+    homepage: URL,
+    kind: ProviderKind,
+    seedReachability: Double
+) -> URLTemplateFlightProvider {
+    URLTemplateFlightProvider(
+        descriptor: ProviderDescriptor(
+            id: id,
+            name: name,
+            homepage: homepage.absoluteString,
+            kind: kind,
+            supportsAutomatedExtraction: false,
+            chinaSeedReachability: seedReachability
+        ),
+        searchMode: .deeplinkOnly
+    ) { _, _ in
+        homepage
+    }
+}
+
+private struct StubReachabilityProber: ProviderReachabilityProbing {
+    let resultsByURL: [URL: Bool]
+
+    func probeReachability(url: URL) async -> Bool {
+        resultsByURL[url] ?? false
     }
 }

@@ -11,6 +11,9 @@ final class SearchViewModel: ObservableObject {
     @Published var autoWatchlistRecheckEnabled: Bool
     @Published var autoWatchlistRecheckIntervalMinutes: Int
     @Published var watchlistNotificationsEnabled: Bool
+    @Published var chinaAccessSnapshots: [ChinaAccessibilityPlanner.ProviderSnapshot]
+    @Published var chinaAccessSummary: String?
+    @Published var isRunningChinaAccessibilitySweep: Bool
 
     @Published var isSearching = false
     @Published var progressByRoute: [String: SearchProgress] = [:]
@@ -40,9 +43,16 @@ final class SearchViewModel: ObservableObject {
         self.autoWatchlistRecheckEnabled = false
         self.autoWatchlistRecheckIntervalMinutes = 30
         self.watchlistNotificationsEnabled = true
+        self.chinaAccessSnapshots = []
+        self.chinaAccessSummary = nil
+        self.isRunningChinaAccessibilitySweep = false
         self.watchlistRecheckSummary = nil
         restoreDefaultsIfAvailable()
         restartAutoWatchlistRecheckTask()
+        Task { [weak self] in
+            guard let self else { return }
+            await self.refreshChinaAccessibilitySnapshot()
+        }
     }
 
     deinit {
@@ -64,6 +74,13 @@ final class SearchViewModel: ObservableObject {
             enabledKinds.remove(kind)
         } else {
             enabledKinds.insert(kind)
+        }
+
+        if options.siteAccessMode == .chinaAccessible {
+            Task { [weak self] in
+                guard let self else { return }
+                await self.refreshChinaAccessibilitySnapshot()
+            }
         }
     }
 
@@ -107,6 +124,22 @@ final class SearchViewModel: ObservableObject {
         guard watchlistNotificationsEnabled != enabled else { return }
         watchlistNotificationsEnabled = enabled
         saveDefaults()
+    }
+
+    func refreshChinaAccessibilitySnapshot() async {
+        let snapshots = await coordinator.chinaAccessibilitySnapshot(enabledKinds: enabledKinds)
+        chinaAccessSnapshots = Array(snapshots.prefix(12))
+    }
+
+    func runChinaAccessibilitySweep() async {
+        guard !isRunningChinaAccessibilitySweep else { return }
+        isRunningChinaAccessibilitySweep = true
+        chinaAccessSummary = nil
+
+        let report = await coordinator.runChinaAccessibilitySweep(enabledKinds: enabledKinds)
+        chinaAccessSnapshots = Array(report.snapshots.prefix(12))
+        chinaAccessSummary = buildChinaAccessibilitySummary(report)
+        isRunningChinaAccessibilitySweep = false
     }
 
     @discardableResult
@@ -270,6 +303,13 @@ final class SearchViewModel: ObservableObject {
         }
         _ = mergeWatchCandidates(result.watchCandidates, saveIfChanged: false)
         saveDefaults()
+
+        if options.siteAccessMode == .chinaAccessible {
+            Task { [weak self] in
+                guard let self else { return }
+                await self.refreshChinaAccessibilitySnapshot()
+            }
+        }
     }
 
     func applyPreset(_ preset: SearchPreset) {
@@ -516,6 +556,15 @@ final class SearchViewModel: ObservableObject {
 
     private func normalizedAutoWatchlistRecheckInterval(_ minutes: Int) -> Int {
         min(max(minutes, 5), 180)
+    }
+
+    private func buildChinaAccessibilitySummary(_ report: ChinaAccessibilityPlanner.ProbeReport) -> String {
+        if report.probedCount == 0 {
+            return "No providers matched the enabled provider types."
+        }
+
+        let providerNoun = report.probedCount == 1 ? "provider" : "providers"
+        return "Probed \(report.probedCount) \(providerNoun). \(report.reachableCount) reachable, \(report.unreachableCount) blocked."
     }
 
     private func restartAutoWatchlistRecheckTask() {

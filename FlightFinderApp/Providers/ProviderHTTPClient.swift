@@ -1,5 +1,9 @@
 import Foundation
 
+protocol ProviderReachabilityProbing: Sendable {
+    func probeReachability(url: URL) async -> Bool
+}
+
 struct ProviderHTTPClient: Sendable {
     private let session: URLSession
 
@@ -54,3 +58,5 @@ struct ProviderHTTPClient: Sendable {
         }
     }
 }
+
+extension ProviderHTTPClient: ProviderReachabilityProbing {}

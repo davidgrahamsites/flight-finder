@@ -117,4 +117,80 @@ struct FlightFinderCoreTests {
         #expect(stats.successRate > 0.6)
         #expect(stats.weightedChinaReachabilityScore > 0.2)
     }
+
+    @Test("China planner probe report tracks reachable and blocked providers")
+    func chinaPlannerProbeReport() async {
+        let reachableURL = URL(string: "https://reachable.example")!
+        let blockedURL = URL(string: "https://blocked.example")!
+
+        let providers = [
+            makeProvider(
+                id: "reachable-provider",
+                name: "Reachable Provider",
+                homepage: reachableURL,
+                kind: .chinaPortal,
+                seedReachability: 0.5
+            ),
+            makeProvider(
+                id: "blocked-provider",
+                name: "Blocked Provider",
+                homepage: blockedURL,
+                kind: .metasearch,
+                seedReachability: 0.5
+            )
+        ]
+
+        let planner = ChinaAccessibilityPlanner(
+            learningStore: ProviderAccessLearningStore(filename: "provider_access_stats_test_\(UUID().uuidString).json"),
+            reachabilityProber: StubReachabilityProber(
+                resultsByURL: [
+                    reachableURL: true,
+                    blockedURL: false
+                ]
+            )
+        )
+
+        let report = await planner.probeAndSnapshot(providers: providers)
+
+        #expect(report.probedCount == 2)
+        #expect(report.reachableCount == 1)
+        #expect(report.unreachableCount == 1)
+        #expect(report.snapshots.count == 2)
+
+        let reachable = report.snapshots.first { $0.providerID == "reachable-provider" }
+        let blocked = report.snapshots.first { $0.providerID == "blocked-provider" }
+        #expect(reachable?.totalChecks == 1)
+        #expect(blocked?.totalChecks == 1)
+        #expect((reachable?.successRate ?? 0) > (blocked?.successRate ?? 1))
+    }
+}
+
+private func makeProvider(
+    id: String,
+    name: String,
+    homepage: URL,
+    kind: ProviderKind,
+    seedReachability: Double
+) -> URLTemplateFlightProvider {
+    URLTemplateFlightProvider(
+        descriptor: ProviderDescriptor(
+            id: id,
+            name: name,
+            homepage: homepage.absoluteString,
+            kind: kind,
+            supportsAutomatedExtraction: false,
+            chinaSeedReachability: seedReachability
+        ),
+        searchMode: .deeplinkOnly
+    ) { _, _ in
+        homepage
+    }
+}
+
+private struct StubReachabilityProber: ProviderReachabilityProbing {
+    let resultsByURL: [URL: Bool]
+
+    func probeReachability(url: URL) async -> Bool {
+        resultsByURL[url] ?? false
+    }
 }

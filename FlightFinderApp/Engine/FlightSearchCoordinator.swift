@@ -16,6 +16,7 @@ struct FlightSearchCoordinator {
         httpClient: ProviderHTTPClient = ProviderHTTPClient(),
         ranking: OfferRankingService = OfferRankingService(),
         normalizer: CurrencyNormalizer = CurrencyNormalizer(),
+        chinaPlanner: ChinaAccessibilityPlanner? = nil,
         deduplication: OfferDeduplicationService = OfferDeduplicationService(),
         analytics: SearchSessionAnalyticsService = SearchSessionAnalyticsService(),
         maxConcurrentProvidersPerRoute: Int = 8,
@@ -25,11 +26,21 @@ struct FlightSearchCoordinator {
         self.httpClient = httpClient
         self.ranking = ranking
         self.normalizer = normalizer
-        self.chinaPlanner = ChinaAccessibilityPlanner(httpClient: httpClient)
+        self.chinaPlanner = chinaPlanner ?? ChinaAccessibilityPlanner(httpClient: httpClient)
         self.deduplication = deduplication
         self.analytics = analytics
         self.maxConcurrentProvidersPerRoute = maxConcurrentProvidersPerRoute
         self.interBatchDelay = interBatchDelay
+    }
+
+    func chinaAccessibilitySnapshot(enabledKinds: Set<ProviderKind>) async -> [ChinaAccessibilityPlanner.ProviderSnapshot] {
+        let selected = providers.filter { enabledKinds.contains($0.descriptor.kind) }
+        return await chinaPlanner.snapshots(providers: selected)
+    }
+
+    func runChinaAccessibilitySweep(enabledKinds: Set<ProviderKind>) async -> ChinaAccessibilityPlanner.ProbeReport {
+        let selected = providers.filter { enabledKinds.contains($0.descriptor.kind) }
+        return await chinaPlanner.probeAndSnapshot(providers: selected)
     }
 
     func search(
