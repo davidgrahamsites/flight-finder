@@ -6,6 +6,8 @@ struct RouteSearchResult: Hashable, Identifiable {
     var offers: [FlightOffer]
     var startedAt: Date
     var endedAt: Date
+    var observability: RouteObservability = .zero
+    var auditTrail: [OfferAuditEntry] = []
 
     var bestOffer: FlightOffer? {
         offers
@@ -21,4 +23,6 @@ struct SearchSessionResult: Hashable {
     var routes: [RouteSearchResult]
     var warnings: [String]
     var generatedAt: Date
+    var observability: SearchSessionObservability = .zero
+    var watchCandidates: [WatchCandidate] = []
 }

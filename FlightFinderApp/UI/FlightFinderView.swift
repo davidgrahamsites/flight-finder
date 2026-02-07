@@ -430,6 +430,8 @@ struct FlightFinderView: View {
                 .frame(height: 190)
 
                 if let session = viewModel.sessionResult {
+                    SessionObservabilityCard(session: session)
+
                     if !session.warnings.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(session.warnings, id: \.self) { warning in
@@ -441,6 +443,15 @@ struct FlightFinderView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
                         }
+                    }
+
+                    if !session.watchCandidates.isEmpty {
+                        Text("\(session.watchCandidates.count) watch candidate\(session.watchCandidates.count == 1 ? "" : "s") generated from current best priced offers.")
+                            .font(outfit(size: 12, weight: .medium))
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(FlightFinderTheme.secondary.opacity(0.18))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
 
                     ForEach(session.routes) { routeResult in
@@ -764,6 +775,15 @@ private struct RouteResultCard: View {
             subtitle: dateLine,
             background: .white
         ) {
+            let observability = routeResult.observability
+
+            HStack(spacing: 8) {
+                ObservabilityChip(label: "Providers", value: "\(observability.providerAttempts)")
+                ObservabilityChip(label: "Deduped", value: "\(observability.deduplicatedOffers)")
+                ObservabilityChip(label: "Avg ms", value: "\(Int(observability.averageProviderLatencyMs.rounded()))")
+                ObservabilityChip(label: "Audit", value: "\(routeResult.auditTrail.count)")
+            }
+
             if let best = routeResult.bestOffer, let price = best.totalPrice {
                 Text("Best: \(best.currencyCode) \(price, format: .number.precision(.fractionLength(0...2)))")
                     .font(Font.custom("Outfit", size: 15).weight(.black))
@@ -877,6 +897,50 @@ private struct OfferRow: View {
             .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.primary))
         }
         .padding(10)
+        .background(FlightFinderTheme.muted)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private struct SessionObservabilityCard: View {
+    let session: SearchSessionResult
+
+    var body: some View {
+        let info = session.observability
+
+        PosterSection(
+            title: "Session Metrics",
+            subtitle: "Live observability snapshot for provider attempts, dedupe, and outcomes.",
+            background: .white
+        ) {
+            HStack(spacing: 8) {
+                ObservabilityChip(label: "Routes", value: "\(info.routeCount)")
+                ObservabilityChip(label: "Attempts", value: "\(info.providerAttempts)")
+                ObservabilityChip(label: "Offers", value: "\(info.offersCollected)")
+                ObservabilityChip(label: "Priced", value: "\(info.pricedOffers)")
+                ObservabilityChip(label: "Deduped", value: "\(info.deduplicatedOffers)")
+                ObservabilityChip(label: "Avg ms", value: "\(Int(info.averageProviderLatencyMs.rounded()))")
+            }
+        }
+    }
+}
+
+private struct ObservabilityChip: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label.uppercased())
+                .font(Font.custom("Outfit", size: 10).weight(.semibold))
+                .tracking(0.8)
+                .foregroundStyle(FlightFinderTheme.foreground.opacity(0.65))
+            Text(value)
+                .font(Font.custom("Outfit", size: 14).weight(.black))
+                .foregroundStyle(FlightFinderTheme.foreground)
+        }
+        .padding(.vertical, 7)
+        .padding(.horizontal, 10)
         .background(FlightFinderTheme.muted)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }

@@ -1,7 +1,7 @@
 import Foundation
 
 struct FlightOffer: Identifiable, Hashable {
-    enum Status: String, Hashable {
+    enum Status: String, Codable, Hashable {
         case priced
         case handoffRequired
         case loginRequired

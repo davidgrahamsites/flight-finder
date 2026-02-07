@@ -7,24 +7,27 @@
 - Airline + metasearch/OTA coverage
 - Cheapest/quality comparison
 
-## v2-v21 Refinements
-1. Domain/engine/provider/UI separation
-2. Capability matrix per provider
-3. Bounded concurrency and anti-throttling behavior
-4. Retry/backoff/timeout policies
-5. Login/captcha-aware statuses
-6. Cross-source deduping
-7. Normalized fare model hooks
-8. Currency normalization scaffold
-9. Route-level progress streaming
-10. User profile/preset readiness
-11. Watchlist-ready architecture
-12. Full provider registry from supplied list
-13. Deep-link handoff for brittle providers
-14. Extraction pipeline abstraction
-15. Offer audit metadata path
-16. Observability counters path
-17. Deterministic no-AI learning mode
-18. Unit test coverage on core logic
-19. Versioned commit/push workflow
-20. Defer bold visual system pass until functional completeness
+## v2-v21 Refinements Status
+1. Domain/engine/provider/UI separation: complete
+2. Capability matrix per provider: complete
+3. Bounded concurrency and anti-throttling behavior: complete
+4. Retry/backoff/timeout policies: complete
+5. Login/captcha-aware statuses: complete
+6. Cross-source deduping: complete
+7. Normalized fare model hooks: complete
+8. Currency normalization scaffold: complete
+9. Route-level progress streaming: complete
+10. User profile/preset readiness: complete
+11. Watchlist-ready architecture: complete
+12. Full provider registry from supplied list: complete
+13. Deep-link handoff for brittle providers: complete
+14. Extraction pipeline abstraction: complete
+15. Offer audit metadata path: complete
+16. Observability counters path: complete
+17. Deterministic no-AI learning mode: complete
+18. Unit test coverage on core logic: complete
+19. Versioned commit/push workflow: complete
+20. Defer bold visual system pass until functional completeness: complete
+
+## v21 Outcome
+- Functional + visual roadmap delivered end-to-end.
