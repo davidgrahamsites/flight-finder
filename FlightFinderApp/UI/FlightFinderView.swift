@@ -227,7 +227,6 @@ struct FlightFinderView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .tint(FlightFinderTheme.primary)
                 }
                 .disabled(viewModel.isSearching)
 
@@ -242,7 +241,6 @@ struct FlightFinderView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .tint(FlightFinderTheme.accent)
                 }
                 .disabled(viewModel.isSearching)
 
@@ -257,7 +255,6 @@ struct FlightFinderView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .tint(FlightFinderTheme.secondary)
                 }
                 .disabled(viewModel.isSearching)
 
@@ -927,9 +924,15 @@ private struct LabeledTextFieldCard: View {
                 .tracking(1.1)
                 .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
 
-            TextField(placeholder, text: $text)
+            TextField(
+                "",
+                text: $text,
+                prompt: Text(placeholder).foregroundStyle(FlightFinderTheme.foreground.opacity(0.52))
+            )
                 .textFieldStyle(.plain)
                 .font(Font.custom("Outfit", size: 13).weight(.medium))
+                .foregroundStyle(FlightFinderTheme.foreground)
+                .tint(FlightFinderTheme.primary)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 12)
                 .background(.white)
@@ -968,8 +971,20 @@ private struct RouteInputCard: View {
             }
 
             HStack(spacing: 10) {
-                FlatTextInput(title: "Origin", placeholder: "SFO", text: $route.origin, disabled: isLocked)
-                FlatTextInput(title: "Destination", placeholder: "PVG", text: $route.destination, disabled: isLocked)
+                FlatTextInput(
+                    title: "Origin",
+                    placeholder: "SFO",
+                    text: $route.origin,
+                    disabled: isLocked,
+                    showsAirportSuggestions: true
+                )
+                FlatTextInput(
+                    title: "Destination",
+                    placeholder: "PVG",
+                    text: $route.destination,
+                    disabled: isLocked,
+                    showsAirportSuggestions: true
+                )
             }
 
             HStack(spacing: 10) {
@@ -981,10 +996,16 @@ private struct RouteInputCard: View {
 
                     DatePicker("", selection: $route.departureDate, displayedComponents: .date)
                         .labelsHidden()
+                        .foregroundStyle(FlightFinderTheme.foreground)
+                        .tint(FlightFinderTheme.primary)
                         .padding(10)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(FlightFinderTheme.muted)
+                        .background(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(FlightFinderTheme.border, lineWidth: 2)
+                        )
                 }
 
                 if tripType.requiresReturnDate {
@@ -996,10 +1017,16 @@ private struct RouteInputCard: View {
 
                         DatePicker("", selection: $route.returnDate, in: route.departureDate..., displayedComponents: .date)
                             .labelsHidden()
+                            .foregroundStyle(FlightFinderTheme.foreground)
+                            .tint(FlightFinderTheme.primary)
                             .padding(10)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(FlightFinderTheme.muted)
+                            .background(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(FlightFinderTheme.border, lineWidth: 2)
+                            )
                     }
                 }
             }
@@ -1016,19 +1043,40 @@ private struct FlatTextInput: View {
     let placeholder: String
     @Binding var text: String
     let disabled: Bool
+    var showsAirportSuggestions: Bool = false
 
     @FocusState private var isFocused: Bool
+    @State private var showsSuggestionsPopover = false
+
+    private var suggestions: [AirportOption] {
+        guard showsAirportSuggestions else { return [] }
+        return AirportDirectory.suggestions(matching: text, limit: 8)
+    }
+
+    private func refreshSuggestionsPopover() {
+        guard showsAirportSuggestions, isFocused, !disabled else {
+            showsSuggestionsPopover = false
+            return
+        }
+        showsSuggestionsPopover = !suggestions.isEmpty
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title.uppercased())
                 .font(Font.custom("Outfit", size: 11).weight(.semibold))
                 .tracking(1.1)
-                .foregroundStyle(FlightFinderTheme.foreground.opacity(0.7))
+                .foregroundStyle(FlightFinderTheme.foreground.opacity(0.82))
 
-            TextField(placeholder, text: $text)
+            TextField(
+                "",
+                text: $text,
+                prompt: Text(placeholder).foregroundStyle(FlightFinderTheme.foreground.opacity(0.5))
+            )
                 .textFieldStyle(.plain)
                 .font(Font.custom("Outfit", size: 15).weight(.medium))
+                .foregroundStyle(FlightFinderTheme.foreground)
+                .tint(FlightFinderTheme.primary)
                 .autocorrectionDisabled(true)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 12)
@@ -1040,8 +1088,59 @@ private struct FlatTextInput: View {
                 )
                 .focused($isFocused)
                 .disabled(disabled)
+                .onAppear {
+                    refreshSuggestionsPopover()
+                }
+                .onChange(of: isFocused) { _, _ in
+                    refreshSuggestionsPopover()
+                }
+                .onChange(of: text) { _, _ in
+                    refreshSuggestionsPopover()
+                }
+                .popover(isPresented: $showsSuggestionsPopover, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
+                    AirportSuggestionsPopover(suggestions: suggestions) { airport in
+                        text = airport.code
+                        showsSuggestionsPopover = false
+                    }
+                }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct AirportSuggestionsPopover: View {
+    let suggestions: [AirportOption]
+    let onSelect: (AirportOption) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, airport in
+                Button {
+                    onSelect(airport)
+                } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(airport.city) (\(airport.code))")
+                            .font(Font.custom("Outfit", size: 13).weight(.bold))
+                            .foregroundStyle(FlightFinderTheme.foreground)
+                        Text("\(airport.name) • \(airport.country)")
+                            .font(Font.custom("Outfit", size: 11).weight(.medium))
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.74))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 10)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if index < suggestions.count - 1 {
+                    Divider()
+                }
+            }
+        }
+        .frame(width: 320)
+        .padding(6)
+        .background(.white)
     }
 }
 

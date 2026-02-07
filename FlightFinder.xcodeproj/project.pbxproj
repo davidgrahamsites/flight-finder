@@ -34,6 +34,7 @@
 		8BFF7CC59AF3FFC7687503D5 /* AppFontLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B5E2B6DD1E60FDC222159D /* AppFontLoader.swift */; };
 		9570D69D687E721F8BF50C68 /* BagPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B8CB60085ACCF8E3E44BAB /* BagPolicy.swift */; };
 		9A7549076E59CD1F04785D69 /* RouteRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 179D2CB481711242C7C57D5C /* RouteRequest.swift */; };
+		9CACCA638739F094F8952AB4 /* AirportDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC1E22BF914D97CB96EEEC2 /* AirportDirectory.swift */; };
 		9DD76AB709A2668DFD9C03C2 /* FlightFinderTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72D5EF418FBC8177B017D5C8 /* FlightFinderTheme.swift */; };
 		A92E809B55A0C404940786F8 /* ProviderKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F1F90D944C57EE3E98D130 /* ProviderKind.swift */; };
 		B0BCBC788695D859E164B0A8 /* CurrencyNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D66003F295C1D2873ED93E0 /* CurrencyNormalizer.swift */; };
@@ -45,6 +46,7 @@
 		C8A2E5F3C081A86D6D1BD606 /* ProviderCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88129B66468B38350276816A /* ProviderCapability.swift */; };
 		C905A1159408D6046BE21C01 /* FlightFinderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2980D00014B154383B965731 /* FlightFinderView.swift */; };
 		C9DFB4B060AF3F1829B279E3 /* OfferDeduplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DF0159559AF05D381F4726 /* OfferDeduplicationService.swift */; };
+		D0BD9EB17072A84E05D92669 /* AirportDirectoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8123DCA93C6C91BBF96C3A /* AirportDirectoryTests.swift */; };
 		D0DEF03B555BA4165C162074 /* URLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E3EF3E320A8770DBF55D816 /* URLQuery.swift */; };
 		D16FC68B16C2C5BBCF6461BE /* CabinClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 513F1AC7D636E9D8FF552DCF /* CabinClass.swift */; };
 		D516E8089ED8DF133C04D5D3 /* WatchlistNotificationClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A0B06E86D84820CDB5B1E8 /* WatchlistNotificationClient.swift */; };
@@ -94,6 +96,7 @@
 		730DC661A3691CD103B060C8 /* ProviderAccessLearningStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderAccessLearningStore.swift; sourceTree = "<group>"; };
 		88129B66468B38350276816A /* ProviderCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderCapability.swift; sourceTree = "<group>"; };
 		8DA720F6960F7A801B7A61EB /* WatchlistCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistCandidate.swift; sourceTree = "<group>"; };
+		8F8123DCA93C6C91BBF96C3A /* AirportDirectoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirportDirectoryTests.swift; sourceTree = "<group>"; };
 		97B8CB60085ACCF8E3E44BAB /* BagPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagPolicy.swift; sourceTree = "<group>"; };
 		9A84509D15CF8AA6648525A1 /* ProviderRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderRegistry.swift; sourceTree = "<group>"; };
 		9BCBA96EDE4AD77898A6C666 /* SearchRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchRequest.swift; sourceTree = "<group>"; };
@@ -118,6 +121,7 @@
 		F5AB86D49C9147A9AEF7DD32 /* ProviderDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderDescriptor.swift; sourceTree = "<group>"; };
 		FA04307E690399A3708BC83C /* WatchlistRecheckPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistRecheckPlan.swift; sourceTree = "<group>"; };
 		FB8910700A267C8BBC9B6C2A /* FlightOffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightOffer.swift; sourceTree = "<group>"; };
+		FCC1E22BF914D97CB96EEEC2 /* AirportDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirportDirectory.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -210,6 +214,7 @@
 		76892A540A97E9E4980885AE /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				FCC1E22BF914D97CB96EEEC2 /* AirportDirectory.swift */,
 				97B8CB60085ACCF8E3E44BAB /* BagPolicy.swift */,
 				513F1AC7D636E9D8FF552DCF /* CabinClass.swift */,
 				FB8910700A267C8BBC9B6C2A /* FlightOffer.swift */,
@@ -247,6 +252,7 @@
 		AB86E2B22CB46BA401351B9E /* FlightFinderTests */ = {
 			isa = PBXGroup;
 			children = (
+				8F8123DCA93C6C91BBF96C3A /* AirportDirectoryTests.swift */,
 				D043D48F79FDC773DA4FF663 /* FlightFinderCoreTests.swift */,
 				64C32D503836B51939680691 /* SearchAnalyticsTests.swift */,
 				69AEC3D2FC85FFB0E62385B7 /* SearchViewModelTests.swift */,
@@ -359,6 +365,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9CACCA638739F094F8952AB4 /* AirportDirectory.swift in Sources */,
 				8BFF7CC59AF3FFC7687503D5 /* AppFontLoader.swift in Sources */,
 				9570D69D687E721F8BF50C68 /* BagPolicy.swift in Sources */,
 				D16FC68B16C2C5BBCF6461BE /* CabinClass.swift in Sources */,
@@ -410,6 +417,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0BD9EB17072A84E05D92669 /* AirportDirectoryTests.swift in Sources */,
 				3640178168EEDB40C88FB8AB /* FlightFinderCoreTests.swift in Sources */,
 				530F03D1EE6B880D0D744024 /* SearchAnalyticsTests.swift in Sources */,
 				C4041A82E59F22C3529AC961 /* SearchViewModelTests.swift in Sources */,

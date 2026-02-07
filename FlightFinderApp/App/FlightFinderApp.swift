@@ -9,6 +9,7 @@ struct FlightFinderApp: App {
     var body: some Scene {
         WindowGroup {
             FlightFinderView()
+                .preferredColorScheme(.light)
                 .frame(minWidth: 1180, minHeight: 780)
         }
         .windowResizability(.contentSize)
