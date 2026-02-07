@@ -102,6 +102,122 @@ struct FlightFinderCoreTests {
         #expect(ranked.first?.providerID == "trip")
     }
 
+    @Test("Cheapest ranking mode prioritizes lower price")
+    func rankingCheapestMode() {
+        var options = FlightSearchOptions.default
+        options.rankingMode = .cheapest
+
+        let route = RouteRequest(origin: "SFO", destination: "JFK", departureDate: Date())
+        let slowerCheap = FlightOffer(
+            providerID: "cheap",
+            providerName: "Cheap Flights",
+            providerKind: .metasearch,
+            route: route,
+            totalPrice: 320,
+            currencyCode: "USD",
+            departureTime: nil,
+            arrivalTime: nil,
+            durationText: "8h 40m",
+            stops: 1,
+            deepLink: URL(string: "https://cheap.example")!,
+            status: .priced,
+            confidence: 0.8,
+            notes: "",
+            collectedAt: Date(),
+            baggageIncludedEstimate: false
+        )
+
+        let fasterExpensive = FlightOffer(
+            providerID: "fast",
+            providerName: "Fast Flights",
+            providerKind: .airline,
+            route: route,
+            totalPrice: 390,
+            currencyCode: "USD",
+            departureTime: nil,
+            arrivalTime: nil,
+            durationText: "6h 15m",
+            stops: 0,
+            deepLink: URL(string: "https://fast.example")!,
+            status: .priced,
+            confidence: 0.9,
+            notes: "",
+            collectedAt: Date(),
+            baggageIncludedEstimate: true
+        )
+
+        let ranked = OfferRankingService().rank([fasterExpensive, slowerCheap], options: options)
+        #expect(ranked.first?.providerID == "cheap")
+    }
+
+    @Test("Fastest ranking mode prioritizes shorter duration")
+    func rankingFastestMode() {
+        var options = FlightSearchOptions.default
+        options.rankingMode = .fastest
+
+        let route = RouteRequest(origin: "LAX", destination: "PVG", departureDate: Date())
+        let cheaperSlow = FlightOffer(
+            providerID: "cheap-slow",
+            providerName: "Budget Slow",
+            providerKind: .ota,
+            route: route,
+            totalPrice: 700,
+            currencyCode: "USD",
+            departureTime: nil,
+            arrivalTime: nil,
+            durationText: "16h 10m",
+            stops: 1,
+            deepLink: URL(string: "https://cheap-slow.example")!,
+            status: .priced,
+            confidence: 0.84,
+            notes: "",
+            collectedAt: Date(),
+            baggageIncludedEstimate: false
+        )
+
+        let pricierFast = FlightOffer(
+            providerID: "pricier-fast",
+            providerName: "Premium Fast",
+            providerKind: .airline,
+            route: route,
+            totalPrice: 790,
+            currencyCode: "USD",
+            departureTime: nil,
+            arrivalTime: nil,
+            durationText: "12h 25m",
+            stops: 0,
+            deepLink: URL(string: "https://pricier-fast.example")!,
+            status: .priced,
+            confidence: 0.9,
+            notes: "",
+            collectedAt: Date(),
+            baggageIncludedEstimate: true
+        )
+
+        let ranked = OfferRankingService().rank([cheaperSlow, pricierFast], options: options)
+        #expect(ranked.first?.providerID == "pricier-fast")
+    }
+
+    @Test("Legacy options decode defaults ranking mode to best")
+    func legacyOptionsDecodeDefaultsRankingMode() throws {
+        let legacyJSON = """
+        {
+          "tripType":"Round Trip",
+          "cabinClass":"Economy",
+          "passengers":{"adults":1,"children":0,"infants":0},
+          "bagPolicy":{"checkedBagsPerTraveler":0,"carryOnIncluded":true},
+          "siteAccessMode":"Global Sites",
+          "nonStopOnly":false,
+          "maxStops":null,
+          "flexibleDays":0,
+          "preferredCurrency":"USD"
+        }
+        """
+
+        let decoded = try JSONDecoder().decode(FlightSearchOptions.self, from: Data(legacyJSON.utf8))
+        #expect(decoded.rankingMode == .best)
+    }
+
     @Test("Provider access stats learn from repeated checks")
     func providerAccessLearning() {
         var stats = ProviderAccessStats(providerID: "trip")

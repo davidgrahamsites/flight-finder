@@ -11,6 +11,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Persistent defaults for routes/options/provider kinds between app launches.
 - Provider types can be enabled/disabled: Airline, Metasearch, OTA, China Portal.
 - Results are ranked by normalized score (price, stops, confidence, and availability state).
+- Ranking mode selector supports `Best`, `Cheapest`, and `Fastest` sorting behavior.
 - Cross-source offer deduplication before ranking.
 - Session and route observability counters (attempts, dedupe counts, status mix, average latency).
 - Results panel controls for status filtering (`All`, `Priced`, `Action`, `Unavailable`) and row density per route.

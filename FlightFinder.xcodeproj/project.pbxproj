@@ -51,6 +51,7 @@
 		D57564AD3A201C3D7AE20079 /* PassengerMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF782DAE4590694D21DDE23 /* PassengerMix.swift */; };
 		D73E38DBECB9A0FDCEEEF061 /* FlightSearchOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE476AD58B9AF393C5C9B39 /* FlightSearchOptions.swift */; };
 		EB0CA313833BCEE67EC23651 /* DateFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE1ECF5EFAC19F3A66BED84 /* DateFormatting.swift */; };
+		EB64010428B2C4D3F82E054A /* OfferRankingMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9563975C59CD36E80E61686 /* OfferRankingMode.swift */; };
 		F133ECB18DC53718FD3447F6 /* ProviderHTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 684CDF9CA0EF31AACC0C95FA /* ProviderHTTPClient.swift */; };
 		F97A35E84C2845F4AA414A9B /* RouteSearchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB97525B2A6BAFEA8F62D1E3 /* RouteSearchResult.swift */; };
 		FB4DAB986CC686FCA81912FF /* ChinaAccessibilityPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B53BEE686B119D294DE2CFE1 /* ChinaAccessibilityPlanner.swift */; };
@@ -109,6 +110,7 @@
 		D9F0BAB31D493C5F72EB0268 /* RouteInputState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteInputState.swift; sourceTree = "<group>"; };
 		DDABD52AA1D8ABE1979C0A27 /* PriceExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceExtraction.swift; sourceTree = "<group>"; };
 		DFF782DAE4590694D21DDE23 /* PassengerMix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassengerMix.swift; sourceTree = "<group>"; };
+		E9563975C59CD36E80E61686 /* OfferRankingMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferRankingMode.swift; sourceTree = "<group>"; };
 		E9C328BC82093BF3DB831FA4 /* SearchTelemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchTelemetry.swift; sourceTree = "<group>"; };
 		EB97525B2A6BAFEA8F62D1E3 /* RouteSearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteSearchResult.swift; sourceTree = "<group>"; };
 		EFE2A183E97951450421FF6E /* FlightFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlightFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -212,6 +214,7 @@
 				513F1AC7D636E9D8FF552DCF /* CabinClass.swift */,
 				FB8910700A267C8BBC9B6C2A /* FlightOffer.swift */,
 				4FE476AD58B9AF393C5C9B39 /* FlightSearchOptions.swift */,
+				E9563975C59CD36E80E61686 /* OfferRankingMode.swift */,
 				DFF782DAE4590694D21DDE23 /* PassengerMix.swift */,
 				4DA7A4AC82FDDD84B152672A /* ProviderAccessStats.swift */,
 				88129B66468B38350276816A /* ProviderCapability.swift */,
@@ -371,6 +374,7 @@
 				D73E38DBECB9A0FDCEEEF061 /* FlightSearchOptions.swift in Sources */,
 				C9DFB4B060AF3F1829B279E3 /* OfferDeduplicationService.swift in Sources */,
 				3674AF792AE170158B44564E /* OfferOpenClient.swift in Sources */,
+				EB64010428B2C4D3F82E054A /* OfferRankingMode.swift in Sources */,
 				C7ED99A05B80DAAE7D32E6E4 /* OfferRankingService.swift in Sources */,
 				D57564AD3A201C3D7AE20079 /* PassengerMix.swift in Sources */,
 				076D01E187B18DAA3A64E97D /* PriceExtraction.swift in Sources */,
@@ -481,7 +485,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -495,7 +499,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.9.1;
+				MARKETING_VERSION = 0.9.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -562,7 +566,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -582,7 +586,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.9.1;
+				MARKETING_VERSION = 0.9.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

@@ -42,3 +42,4 @@
 7. Login-required offer handoff prompt with explicit user confirmation flow: complete
 8. Results panel filter controls (status + row cap) with deterministic view-model behavior: complete
 9. Skills catalog integration expanded to live Awesome Agent Skills parser + scoped installers (official/all): complete
+10. Ranking mode selection (`Best`, `Cheapest`, `Fastest`) with backward-compatible saved-options decoding: complete

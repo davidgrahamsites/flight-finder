@@ -232,6 +232,21 @@ struct FlightFinderView: View {
                 .disabled(viewModel.isSearching)
 
                 VStack(alignment: .leading, spacing: 6) {
+                    Text("Rank Results By")
+                        .font(outfit(size: 12, weight: .semibold))
+                        .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
+
+                    Picker("Ranking Mode", selection: $viewModel.options.rankingMode) {
+                        ForEach(OfferRankingMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(FlightFinderTheme.accent)
+                }
+                .disabled(viewModel.isSearching)
+
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Site Access")
                         .font(outfit(size: 12, weight: .semibold))
                         .foregroundStyle(FlightFinderTheme.foreground.opacity(0.75))
