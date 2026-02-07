@@ -1,6 +1,6 @@
 import Foundation
 
-struct WatchlistAlert: Hashable, Identifiable {
+struct WatchlistAlert: Hashable, Identifiable, Sendable {
     var id: UUID = UUID()
     var candidateID: UUID
     var routeKey: String

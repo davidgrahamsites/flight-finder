@@ -17,6 +17,7 @@ FlightFinder is a native macOS SwiftUI app that compares flight options across a
 - Persistent watchlist entries with merge/update behavior from best priced route offers.
 - In-app watchlist target-hit alerts with open/dismiss controls and auto-refresh of observed prices.
 - One-click watchlist re-check planner (trip-type aware, deterministic, capped to 3 concurrent routes).
+- Optional auto watchlist re-check scheduler (configurable interval) with local desktop target-hit notifications.
 - Status-aware outputs: priced, handoff required, login required, unavailable.
 
 ## UI System

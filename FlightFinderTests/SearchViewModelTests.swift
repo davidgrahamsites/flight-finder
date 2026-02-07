@@ -474,6 +474,114 @@ struct SearchViewModelTests {
         #expect(viewModel.watchlistRecheckSummary == "Watchlist is empty.")
         #expect(viewModel.isSearching == false)
     }
+
+    @Test("Auto recheck preferences are persisted and restored")
+    func autoRecheckPreferencesPersist() {
+        let store = InMemorySearchPreferencesStore()
+
+        do {
+            let first = SearchViewModel(
+                coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+                preferencesStore: store
+            )
+            first.setAutoWatchlistRecheckEnabled(true)
+            first.setAutoWatchlistRecheckIntervalMinutes(45)
+            first.setWatchlistNotificationsEnabled(false)
+            first.saveDefaults()
+        }
+
+        let second = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        #expect(second.autoWatchlistRecheckEnabled == true)
+        #expect(second.autoWatchlistRecheckIntervalMinutes == 45)
+        #expect(second.watchlistNotificationsEnabled == false)
+    }
+
+    @Test("Auto recheck interval is clamped to supported range")
+    func autoRecheckIntervalClamped() {
+        let store = InMemorySearchPreferencesStore()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        viewModel.setAutoWatchlistRecheckIntervalMinutes(1)
+        #expect(viewModel.autoWatchlistRecheckIntervalMinutes == 5)
+
+        viewModel.setAutoWatchlistRecheckIntervalMinutes(999)
+        #expect(viewModel.autoWatchlistRecheckIntervalMinutes == 180)
+    }
+
+    @Test("Target hit notifications are emitted only for newly inserted alerts when enabled")
+    func notificationsOnlyForNewAlerts() {
+        let store = InMemorySearchPreferencesStore()
+        let notificationClient = RecordingWatchlistNotificationClient()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store,
+            notificationClient: notificationClient
+        )
+
+        let routeDate = Date(timeIntervalSince1970: 1_700_800_000)
+        let observedAt = Date(timeIntervalSince1970: 1_700_810_000)
+        let route = RouteRequest(origin: "SFO", destination: "PVG", departureDate: routeDate)
+        viewModel.watchlist = [
+            WatchCandidate(
+                routeKey: route.routeKey,
+                providerID: "trip",
+                providerName: "Trip.com",
+                deepLink: URL(string: "https://trip.com")!,
+                currencyCode: "USD",
+                observedPrice: 1_000,
+                targetPrice: 900,
+                lastSeenAt: routeDate,
+                origin: route.origin,
+                destination: route.destination,
+                departureDate: route.departureDate
+            )
+        ]
+
+        let offer = FlightOffer(
+            providerID: "trip",
+            providerName: "Trip.com",
+            providerKind: .chinaPortal,
+            route: route,
+            totalPrice: 880,
+            currencyCode: "USD",
+            departureTime: nil,
+            arrivalTime: nil,
+            durationText: nil,
+            stops: 1,
+            deepLink: URL(string: "https://trip.com/deal")!,
+            status: .priced,
+            confidence: 0.9,
+            notes: "",
+            collectedAt: observedAt,
+            baggageIncludedEstimate: true
+        )
+        let session = SearchSessionResult(
+            routes: [RouteSearchResult(route: route, offers: [offer], startedAt: observedAt, endedAt: observedAt)],
+            warnings: [],
+            generatedAt: observedAt,
+            observability: .zero,
+            watchCandidates: []
+        )
+
+        viewModel.setWatchlistNotificationsEnabled(true)
+        viewModel.processSessionResult(session, observedAt: observedAt)
+        #expect(notificationClient.capturedAlerts.count == 1)
+
+        viewModel.processSessionResult(session, observedAt: observedAt)
+        #expect(notificationClient.capturedAlerts.count == 1)
+
+        viewModel.setWatchlistNotificationsEnabled(false)
+        let later = observedAt.addingTimeInterval(120)
+        viewModel.processSessionResult(session, observedAt: later)
+        #expect(notificationClient.capturedAlerts.count == 1)
+    }
 }
 
 private final class InMemorySearchPreferencesStore: SearchPreferencesStore {
@@ -485,5 +593,13 @@ private final class InMemorySearchPreferencesStore: SearchPreferencesStore {
 
     func save(_ config: SavedSearchConfig) {
         self.config = config
+    }
+}
+
+private final class RecordingWatchlistNotificationClient: WatchlistNotificationClient {
+    var capturedAlerts: [WatchlistAlert] = []
+
+    func notifyTargetHitAlerts(_ alerts: [WatchlistAlert]) {
+        capturedAlerts.append(contentsOf: alerts)
     }
 }

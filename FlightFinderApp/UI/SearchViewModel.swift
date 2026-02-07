@@ -8,6 +8,9 @@ final class SearchViewModel: ObservableObject {
     @Published var selectedPreset: SearchPreset?
     @Published var watchlist: [WatchCandidate]
     @Published var watchlistAlerts: [WatchlistAlert]
+    @Published var autoWatchlistRecheckEnabled: Bool
+    @Published var autoWatchlistRecheckIntervalMinutes: Int
+    @Published var watchlistNotificationsEnabled: Bool
 
     @Published var isSearching = false
     @Published var progressByRoute: [String: SearchProgress] = [:]
@@ -17,21 +20,33 @@ final class SearchViewModel: ObservableObject {
 
     private let coordinator: FlightSearchCoordinator
     private let preferencesStore: any SearchPreferencesStore
+    private let notificationClient: any WatchlistNotificationClient
+    private var autoWatchlistRecheckTask: Task<Void, Never>?
 
     init(
         coordinator: FlightSearchCoordinator = FlightSearchCoordinator(),
-        preferencesStore: any SearchPreferencesStore = UserDefaultsSearchPreferencesStore()
+        preferencesStore: any SearchPreferencesStore = UserDefaultsSearchPreferencesStore(),
+        notificationClient: any WatchlistNotificationClient = LocalWatchlistNotificationClient()
     ) {
         self.coordinator = coordinator
         self.preferencesStore = preferencesStore
+        self.notificationClient = notificationClient
         self.options = .default
         self.enabledKinds = Set(ProviderKind.allCases)
         self.routes = [RouteInputState(origin: "SFO", destination: "LAX")]
         self.selectedPreset = nil
         self.watchlist = []
         self.watchlistAlerts = []
+        self.autoWatchlistRecheckEnabled = false
+        self.autoWatchlistRecheckIntervalMinutes = 30
+        self.watchlistNotificationsEnabled = true
         self.watchlistRecheckSummary = nil
         restoreDefaultsIfAvailable()
+        restartAutoWatchlistRecheckTask()
+    }
+
+    deinit {
+        autoWatchlistRecheckTask?.cancel()
     }
 
     func addRoute() {
@@ -71,6 +86,27 @@ final class SearchViewModel: ObservableObject {
 
     func clearWatchlistAlerts() {
         watchlistAlerts = []
+    }
+
+    func setAutoWatchlistRecheckEnabled(_ enabled: Bool) {
+        guard autoWatchlistRecheckEnabled != enabled else { return }
+        autoWatchlistRecheckEnabled = enabled
+        saveDefaults()
+        restartAutoWatchlistRecheckTask()
+    }
+
+    func setAutoWatchlistRecheckIntervalMinutes(_ minutes: Int) {
+        let normalized = normalizedAutoWatchlistRecheckInterval(minutes)
+        guard autoWatchlistRecheckIntervalMinutes != normalized else { return }
+        autoWatchlistRecheckIntervalMinutes = normalized
+        saveDefaults()
+        restartAutoWatchlistRecheckTask()
+    }
+
+    func setWatchlistNotificationsEnabled(_ enabled: Bool) {
+        guard watchlistNotificationsEnabled != enabled else { return }
+        watchlistNotificationsEnabled = enabled
+        saveDefaults()
     }
 
     @discardableResult
@@ -171,8 +207,14 @@ final class SearchViewModel: ObservableObject {
     }
 
     func runWatchlistRecheck() async {
+        await runWatchlistRecheck(trigger: .manual)
+    }
+
+    private func runWatchlistRecheck(trigger: WatchlistRecheckTrigger) async {
         guard !watchlist.isEmpty else {
-            watchlistRecheckSummary = "Watchlist is empty."
+            if trigger == .manual {
+                watchlistRecheckSummary = "Watchlist is empty."
+            }
             return
         }
 
@@ -181,7 +223,9 @@ final class SearchViewModel: ObservableObject {
         }
 
         guard let plan = makeWatchlistRecheckPlan() else {
-            watchlistRecheckSummary = "No valid watchlist routes to re-check."
+            if trigger == .manual {
+                watchlistRecheckSummary = "No valid watchlist routes to re-check."
+            }
             return
         }
 
@@ -206,10 +250,12 @@ final class SearchViewModel: ObservableObject {
                 }
             }
             processSessionResult(result)
-            watchlistRecheckSummary = buildWatchlistRecheckSummary(plan)
+            watchlistRecheckSummary = buildWatchlistRecheckSummary(plan, trigger: trigger)
         } catch {
             searchError = error.localizedDescription
-            watchlistRecheckSummary = "Watchlist re-check failed."
+            if trigger == .manual {
+                watchlistRecheckSummary = "Watchlist re-check failed."
+            }
         }
 
         isSearching = false
@@ -218,7 +264,10 @@ final class SearchViewModel: ObservableObject {
     func processSessionResult(_ result: SearchSessionResult, observedAt: Date = Date()) {
         sessionResult = result
         let freshAlerts = syncWatchlistToOffers(from: result, observedAt: observedAt)
-        appendWatchlistAlerts(freshAlerts)
+        let insertedAlerts = appendWatchlistAlerts(freshAlerts)
+        if watchlistNotificationsEnabled, !insertedAlerts.isEmpty {
+            notificationClient.notifyTargetHitAlerts(insertedAlerts)
+        }
         _ = mergeWatchCandidates(result.watchCandidates, saveIfChanged: false)
         saveDefaults()
     }
@@ -240,7 +289,10 @@ final class SearchViewModel: ObservableObject {
             options: options,
             enabledKinds: enabledKinds,
             lastPreset: lastPreset ?? selectedPreset,
-            watchlist: watchlist
+            watchlist: watchlist,
+            autoWatchlistRecheckEnabled: autoWatchlistRecheckEnabled,
+            autoWatchlistRecheckIntervalMinutes: autoWatchlistRecheckIntervalMinutes,
+            watchlistNotificationsEnabled: watchlistNotificationsEnabled
         )
         preferencesStore.save(config)
     }
@@ -281,6 +333,9 @@ final class SearchViewModel: ObservableObject {
         enabledKinds = saved.enabledKinds.isEmpty ? Set(ProviderKind.allCases) : saved.enabledKinds
         selectedPreset = saved.lastPreset
         watchlist = sortWatchlist(saved.watchlist)
+        autoWatchlistRecheckEnabled = saved.autoWatchlistRecheckEnabled
+        autoWatchlistRecheckIntervalMinutes = normalizedAutoWatchlistRecheckInterval(saved.autoWatchlistRecheckIntervalMinutes)
+        watchlistNotificationsEnabled = saved.watchlistNotificationsEnabled
     }
 
     private func syncWatchlistToOffers(from result: SearchSessionResult, observedAt: Date) -> [WatchlistAlert] {
@@ -375,17 +430,21 @@ final class SearchViewModel: ObservableObject {
         return offersByKey
     }
 
-    private func appendWatchlistAlerts(_ alerts: [WatchlistAlert]) {
-        guard !alerts.isEmpty else { return }
+    @discardableResult
+    private func appendWatchlistAlerts(_ alerts: [WatchlistAlert]) -> [WatchlistAlert] {
+        guard !alerts.isEmpty else { return [] }
 
         var knownKeys = Set(watchlistAlerts.map(\.dedupeKey))
         var merged = watchlistAlerts
+        var inserted: [WatchlistAlert] = []
         for alert in alerts {
             guard !knownKeys.contains(alert.dedupeKey) else { continue }
             knownKeys.insert(alert.dedupeKey)
             merged.insert(alert, at: 0)
+            inserted.append(alert)
         }
         watchlistAlerts = Array(merged.prefix(30))
+        return inserted
     }
 
     private func sortWatchlist(_ items: [WatchCandidate]) -> [WatchCandidate] {
@@ -436,9 +495,12 @@ final class SearchViewModel: ObservableObject {
         )
     }
 
-    private func buildWatchlistRecheckSummary(_ plan: WatchlistRecheckPlan) -> String {
+    private func buildWatchlistRecheckSummary(_ plan: WatchlistRecheckPlan, trigger: WatchlistRecheckTrigger) -> String {
+        let prefix = trigger == .scheduled ? "Auto re-check complete." : "Rechecked"
         var parts = [
-            "Rechecked \(plan.routes.count) watchlist route\(plan.routes.count == 1 ? "" : "s") as \(plan.tripType.rawValue.lowercased())."
+            trigger == .scheduled
+                ? "\(prefix) \(plan.routes.count) route\(plan.routes.count == 1 ? "" : "s") as \(plan.tripType.rawValue.lowercased())."
+                : "\(prefix) \(plan.routes.count) watchlist route\(plan.routes.count == 1 ? "" : "s") as \(plan.tripType.rawValue.lowercased())."
         ]
 
         if plan.skippedByTripType > 0 {
@@ -452,6 +514,31 @@ final class SearchViewModel: ObservableObject {
         return parts.joined(separator: " ")
     }
 
+    private func normalizedAutoWatchlistRecheckInterval(_ minutes: Int) -> Int {
+        min(max(minutes, 5), 180)
+    }
+
+    private func restartAutoWatchlistRecheckTask() {
+        autoWatchlistRecheckTask?.cancel()
+        guard autoWatchlistRecheckEnabled else { return }
+
+        autoWatchlistRecheckTask = Task { [weak self] in
+            guard let self else { return }
+
+            while !Task.isCancelled {
+                let intervalSeconds = max(5, self.autoWatchlistRecheckIntervalMinutes * 60)
+                do {
+                    try await Task.sleep(for: .seconds(intervalSeconds))
+                } catch {
+                    return
+                }
+
+                guard !Task.isCancelled else { return }
+                await self.runWatchlistRecheck(trigger: .scheduled)
+            }
+        }
+    }
+
     private func roundToTwo(_ value: Double) -> Double {
         (value * 100).rounded() / 100
     }
@@ -462,4 +549,9 @@ private struct WatchlistRouteDescriptor {
     let tripType: TripType
     let lastSeenAt: Date
     let identityKey: String
+}
+
+private enum WatchlistRecheckTrigger {
+    case manual
+    case scheduled
 }

@@ -415,6 +415,56 @@ struct FlightFinderView: View {
             background: Color(hex: 0xFFFBEB)
         ) {
             VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle(
+                        "Auto Re-check Watchlist",
+                        isOn: Binding(
+                            get: { viewModel.autoWatchlistRecheckEnabled },
+                            set: { viewModel.setAutoWatchlistRecheckEnabled($0) }
+                        )
+                    )
+                    .font(outfit(size: 13, weight: .semibold))
+                    .disabled(viewModel.isSearching)
+
+                    HStack(spacing: 10) {
+                        Text("Interval")
+                            .font(outfit(size: 12, weight: .semibold))
+                            .foregroundStyle(FlightFinderTheme.foreground.opacity(0.72))
+
+                        Picker(
+                            "Interval",
+                            selection: Binding(
+                                get: { viewModel.autoWatchlistRecheckIntervalMinutes },
+                                set: { viewModel.setAutoWatchlistRecheckIntervalMinutes($0) }
+                            )
+                        ) {
+                            ForEach([5, 10, 15, 30, 45, 60, 90, 120, 180], id: \.self) { minutes in
+                                Text("Every \(minutes)m").tag(minutes)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .disabled(!viewModel.autoWatchlistRecheckEnabled || viewModel.isSearching)
+
+                        Spacer()
+
+                        Toggle(
+                            "Desktop Alerts",
+                            isOn: Binding(
+                                get: { viewModel.watchlistNotificationsEnabled },
+                                set: { viewModel.setWatchlistNotificationsEnabled($0) }
+                            )
+                        )
+                        .font(outfit(size: 12, weight: .semibold))
+                    }
+                }
+                .padding(10)
+                .background(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(FlightFinderTheme.border, lineWidth: 2)
+                )
+
                 if let session = viewModel.sessionResult, !session.watchCandidates.isEmpty {
                     Button("Merge Latest Candidates (\(session.watchCandidates.count))") {
                         viewModel.mergeWatchCandidates(session.watchCandidates)

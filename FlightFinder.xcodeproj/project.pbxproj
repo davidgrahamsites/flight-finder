@@ -46,6 +46,7 @@
 		C9DFB4B060AF3F1829B279E3 /* OfferDeduplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DF0159559AF05D381F4726 /* OfferDeduplicationService.swift */; };
 		D0DEF03B555BA4165C162074 /* URLQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E3EF3E320A8770DBF55D816 /* URLQuery.swift */; };
 		D16FC68B16C2C5BBCF6461BE /* CabinClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 513F1AC7D636E9D8FF552DCF /* CabinClass.swift */; };
+		D516E8089ED8DF133C04D5D3 /* WatchlistNotificationClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A0B06E86D84820CDB5B1E8 /* WatchlistNotificationClient.swift */; };
 		D57564AD3A201C3D7AE20079 /* PassengerMix.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF782DAE4590694D21DDE23 /* PassengerMix.swift */; };
 		D73E38DBECB9A0FDCEEEF061 /* FlightSearchOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE476AD58B9AF393C5C9B39 /* FlightSearchOptions.swift */; };
 		EB0CA313833BCEE67EC23651 /* DateFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE1ECF5EFAC19F3A66BED84 /* DateFormatting.swift */; };
@@ -102,6 +103,7 @@
 		CBB3776DE3217463E53D689F /* SearchProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchProgress.swift; sourceTree = "<group>"; };
 		CE10EF3B21CC4844BE2AA45B /* OfferRankingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferRankingService.swift; sourceTree = "<group>"; };
 		D043D48F79FDC773DA4FF663 /* FlightFinderCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightFinderCoreTests.swift; sourceTree = "<group>"; };
+		D2A0B06E86D84820CDB5B1E8 /* WatchlistNotificationClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistNotificationClient.swift; sourceTree = "<group>"; };
 		D9F0BAB31D493C5F72EB0268 /* RouteInputState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteInputState.swift; sourceTree = "<group>"; };
 		DDABD52AA1D8ABE1979C0A27 /* PriceExtraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceExtraction.swift; sourceTree = "<group>"; };
 		DFF782DAE4590694D21DDE23 /* PassengerMix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassengerMix.swift; sourceTree = "<group>"; };
@@ -195,6 +197,7 @@
 				CE10EF3B21CC4844BE2AA45B /* OfferRankingService.swift */,
 				730DC661A3691CD103B060C8 /* ProviderAccessLearningStore.swift */,
 				1EEB5DE8A978078EA2F337BA /* SearchSessionAnalyticsService.swift */,
+				D2A0B06E86D84820CDB5B1E8 /* WatchlistNotificationClient.swift */,
 			);
 			path = Engine;
 			sourceTree = "<group>";
@@ -390,6 +393,7 @@
 				6DBF371D586CB0E7AA14B99D /* URLTemplateFlightProvider.swift in Sources */,
 				047BF005D0C3FD5435FE90E6 /* WatchlistAlert.swift in Sources */,
 				6644BE0740FAED4A4F5E2CCE /* WatchlistCandidate.swift in Sources */,
+				D516E8089ED8DF133C04D5D3 /* WatchlistNotificationClient.swift in Sources */,
 				3092155C9EE4F96900AE7711 /* WatchlistRecheckPlan.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -473,7 +477,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -487,7 +491,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -554,7 +558,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -574,7 +578,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

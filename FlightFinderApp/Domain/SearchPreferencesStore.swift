@@ -6,19 +6,28 @@ struct SavedSearchConfig: Codable, Hashable {
     var enabledKinds: Set<ProviderKind>
     var lastPreset: SearchPreset?
     var watchlist: [WatchCandidate]
+    var autoWatchlistRecheckEnabled: Bool
+    var autoWatchlistRecheckIntervalMinutes: Int
+    var watchlistNotificationsEnabled: Bool
 
     init(
         routes: [RouteInputState],
         options: FlightSearchOptions,
         enabledKinds: Set<ProviderKind>,
         lastPreset: SearchPreset?,
-        watchlist: [WatchCandidate] = []
+        watchlist: [WatchCandidate] = [],
+        autoWatchlistRecheckEnabled: Bool = false,
+        autoWatchlistRecheckIntervalMinutes: Int = 30,
+        watchlistNotificationsEnabled: Bool = true
     ) {
         self.routes = routes
         self.options = options
         self.enabledKinds = enabledKinds
         self.lastPreset = lastPreset
         self.watchlist = watchlist
+        self.autoWatchlistRecheckEnabled = autoWatchlistRecheckEnabled
+        self.autoWatchlistRecheckIntervalMinutes = autoWatchlistRecheckIntervalMinutes
+        self.watchlistNotificationsEnabled = watchlistNotificationsEnabled
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -27,6 +36,9 @@ struct SavedSearchConfig: Codable, Hashable {
         case enabledKinds
         case lastPreset
         case watchlist
+        case autoWatchlistRecheckEnabled
+        case autoWatchlistRecheckIntervalMinutes
+        case watchlistNotificationsEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -36,6 +48,9 @@ struct SavedSearchConfig: Codable, Hashable {
         self.enabledKinds = try container.decode(Set<ProviderKind>.self, forKey: .enabledKinds)
         self.lastPreset = try container.decodeIfPresent(SearchPreset.self, forKey: .lastPreset)
         self.watchlist = try container.decodeIfPresent([WatchCandidate].self, forKey: .watchlist) ?? []
+        self.autoWatchlistRecheckEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoWatchlistRecheckEnabled) ?? false
+        self.autoWatchlistRecheckIntervalMinutes = try container.decodeIfPresent(Int.self, forKey: .autoWatchlistRecheckIntervalMinutes) ?? 30
+        self.watchlistNotificationsEnabled = try container.decodeIfPresent(Bool.self, forKey: .watchlistNotificationsEnabled) ?? true
     }
 }
 
