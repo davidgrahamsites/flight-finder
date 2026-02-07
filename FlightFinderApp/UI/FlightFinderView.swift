@@ -422,6 +422,33 @@ struct FlightFinderView: View {
                     .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.accent))
                 }
 
+                Button {
+                    Task {
+                        await viewModel.runWatchlistRecheck()
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        if viewModel.isSearching {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(FlightFinderTheme.foreground)
+                        }
+                        Text("Re-check Watchlist")
+                            .font(outfit(size: 13, weight: .bold))
+                    }
+                }
+                .buttonStyle(OutlinePosterButtonStyle(color: FlightFinderTheme.secondary))
+                .disabled(viewModel.watchlist.isEmpty || viewModel.isSearching)
+
+                if let summary = viewModel.watchlistRecheckSummary, !summary.isEmpty {
+                    Text(summary)
+                        .font(outfit(size: 12, weight: .medium))
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(FlightFinderTheme.secondary.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+
                 if viewModel.watchlist.isEmpty {
                     Text("No watchlist entries yet. Run a search and merge candidates from results.")
                         .font(outfit(size: 13, weight: .regular))

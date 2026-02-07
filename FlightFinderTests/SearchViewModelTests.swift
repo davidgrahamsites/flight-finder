@@ -319,6 +319,161 @@ struct SearchViewModelTests {
         #expect(viewModel.watchlistAlerts.count == 1)
         #expect(viewModel.watchlistAlerts[0].id == second.id)
     }
+
+    @Test("Watchlist recheck plan uses preferred trip type and enforces three-route cap")
+    func watchlistRecheckPlanPreferredTripType() {
+        let store = InMemorySearchPreferencesStore()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        viewModel.options.tripType = .oneWay
+        let base = Date(timeIntervalSince1970: 1_700_400_000)
+
+        viewModel.watchlist = [
+            WatchCandidate(
+                routeKey: "JFK-PVG-2026-04-10",
+                providerID: "trip",
+                providerName: "Trip.com",
+                deepLink: URL(string: "https://trip.com")!,
+                currencyCode: "USD",
+                observedPrice: 980,
+                targetPrice: 900,
+                lastSeenAt: base.addingTimeInterval(50),
+                origin: "JFK",
+                destination: "PVG",
+                departureDate: base,
+                returnDate: base.addingTimeInterval(86_400 * 7)
+            ),
+            WatchCandidate(
+                routeKey: "SFO-PVG-2026-04-10",
+                providerID: "kayak",
+                providerName: "KAYAK",
+                deepLink: URL(string: "https://kayak.com")!,
+                currencyCode: "USD",
+                observedPrice: 1_050,
+                targetPrice: 930,
+                lastSeenAt: base.addingTimeInterval(40),
+                origin: "SFO",
+                destination: "PVG",
+                departureDate: base
+            ),
+            WatchCandidate(
+                routeKey: "SEA-PVG-2026-04-11",
+                providerID: "trip",
+                providerName: "Trip.com",
+                deepLink: URL(string: "https://trip.com/2")!,
+                currencyCode: "USD",
+                observedPrice: 1_040,
+                targetPrice: 920,
+                lastSeenAt: base.addingTimeInterval(30),
+                origin: "SEA",
+                destination: "PVG",
+                departureDate: base.addingTimeInterval(86_400)
+            ),
+            WatchCandidate(
+                routeKey: "LAX-PVG-2026-04-12",
+                providerID: "trip",
+                providerName: "Trip.com",
+                deepLink: URL(string: "https://trip.com/3")!,
+                currencyCode: "USD",
+                observedPrice: 1_030,
+                targetPrice: 910,
+                lastSeenAt: base.addingTimeInterval(20),
+                origin: "LAX",
+                destination: "PVG",
+                departureDate: base.addingTimeInterval(86_400 * 2)
+            ),
+            WatchCandidate(
+                routeKey: "BOS-PVG-2026-04-13",
+                providerID: "trip",
+                providerName: "Trip.com",
+                deepLink: URL(string: "https://trip.com/4")!,
+                currencyCode: "USD",
+                observedPrice: 1_020,
+                targetPrice: 900,
+                lastSeenAt: base.addingTimeInterval(10),
+                origin: "BOS",
+                destination: "PVG",
+                departureDate: base.addingTimeInterval(86_400 * 3)
+            )
+        ]
+
+        let plan = viewModel.makeWatchlistRecheckPlan()
+
+        #expect(plan != nil)
+        #expect(plan?.tripType == .oneWay)
+        #expect(plan?.routes.count == 3)
+        #expect(plan?.skippedByTripType == 1)
+        #expect(plan?.truncatedRoutes == 1)
+        #expect(plan?.routes[0].origin == "SFO")
+        #expect(plan?.routes[1].origin == "SEA")
+        #expect(plan?.routes[2].origin == "LAX")
+    }
+
+    @Test("Watchlist recheck plan falls back when preferred trip type has no candidates")
+    func watchlistRecheckPlanFallbackTripType() {
+        let store = InMemorySearchPreferencesStore()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        viewModel.options.tripType = .roundTrip
+        let base = Date(timeIntervalSince1970: 1_700_500_000)
+        viewModel.watchlist = [
+            WatchCandidate(
+                routeKey: "SFO-PVG-2026-05-01",
+                providerID: "trip",
+                providerName: "Trip.com",
+                deepLink: URL(string: "https://trip.com")!,
+                currencyCode: "USD",
+                observedPrice: 1_200,
+                targetPrice: 1_100,
+                lastSeenAt: base.addingTimeInterval(30),
+                origin: "SFO",
+                destination: "PVG",
+                departureDate: base
+            ),
+            WatchCandidate(
+                routeKey: "JFK-PVG-2026-05-02",
+                providerID: "kayak",
+                providerName: "KAYAK",
+                deepLink: URL(string: "https://kayak.com")!,
+                currencyCode: "USD",
+                observedPrice: 1_180,
+                targetPrice: 1_070,
+                lastSeenAt: base.addingTimeInterval(20),
+                origin: "JFK",
+                destination: "PVG",
+                departureDate: base.addingTimeInterval(86_400)
+            )
+        ]
+
+        let plan = viewModel.makeWatchlistRecheckPlan()
+
+        #expect(plan != nil)
+        #expect(plan?.tripType == .oneWay)
+        #expect(plan?.routes.count == 2)
+        #expect(plan?.skippedByTripType == 0)
+        #expect(plan?.truncatedRoutes == 0)
+    }
+
+    @Test("Running watchlist recheck with empty watchlist reports summary")
+    func runWatchlistRecheckEmpty() async {
+        let store = InMemorySearchPreferencesStore()
+        let viewModel = SearchViewModel(
+            coordinator: FlightSearchCoordinator(providers: [], httpClient: ProviderHTTPClient(), ranking: OfferRankingService(), normalizer: CurrencyNormalizer()),
+            preferencesStore: store
+        )
+
+        viewModel.watchlist = []
+        await viewModel.runWatchlistRecheck()
+
+        #expect(viewModel.watchlistRecheckSummary == "Watchlist is empty.")
+        #expect(viewModel.isSearching == false)
+    }
 }
 
 private final class InMemorySearchPreferencesStore: SearchPreferencesStore {

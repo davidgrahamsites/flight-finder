@@ -95,7 +95,11 @@ struct SearchSessionAnalyticsService {
                 currencyCode: best.currencyCode,
                 observedPrice: roundToTwo(observedPrice),
                 targetPrice: targetPrice,
-                lastSeenAt: observedAt
+                lastSeenAt: observedAt,
+                origin: routeResult.route.origin,
+                destination: routeResult.route.destination,
+                departureDate: routeResult.route.departureDate,
+                returnDate: routeResult.route.returnDate
             )
         }
     }

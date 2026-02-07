@@ -13,6 +13,7 @@ final class SearchViewModel: ObservableObject {
     @Published var progressByRoute: [String: SearchProgress] = [:]
     @Published var sessionResult: SearchSessionResult?
     @Published var searchError: String?
+    @Published var watchlistRecheckSummary: String?
 
     private let coordinator: FlightSearchCoordinator
     private let preferencesStore: any SearchPreferencesStore
@@ -29,6 +30,7 @@ final class SearchViewModel: ObservableObject {
         self.selectedPreset = nil
         self.watchlist = []
         self.watchlistAlerts = []
+        self.watchlistRecheckSummary = nil
         restoreDefaultsIfAvailable()
     }
 
@@ -54,6 +56,7 @@ final class SearchViewModel: ObservableObject {
         progressByRoute = [:]
         sessionResult = nil
         searchError = nil
+        watchlistRecheckSummary = nil
     }
 
     func removeWatchCandidate(id: UUID) {
@@ -77,12 +80,12 @@ final class SearchViewModel: ObservableObject {
         var indexByKey: [String: Int] = [:]
         var merged = watchlist
         for (index, existing) in merged.enumerated() {
-            indexByKey["\(existing.routeKey)|\(existing.providerID)"] = index
+            indexByKey[watchLegacyKey(routeKey: existing.routeKey, providerID: existing.providerID)] = index
         }
 
         var changedCount = 0
         for candidate in candidates {
-            let key = "\(candidate.routeKey)|\(candidate.providerID)"
+            let key = watchLegacyKey(routeKey: candidate.routeKey, providerID: candidate.providerID)
             if let existingIndex = indexByKey[key] {
                 let existing = merged[existingIndex]
                 let updated = WatchCandidate(
@@ -94,7 +97,11 @@ final class SearchViewModel: ObservableObject {
                     currencyCode: candidate.currencyCode,
                     observedPrice: candidate.observedPrice,
                     targetPrice: min(existing.targetPrice, candidate.targetPrice),
-                    lastSeenAt: max(existing.lastSeenAt, candidate.lastSeenAt)
+                    lastSeenAt: max(existing.lastSeenAt, candidate.lastSeenAt),
+                    origin: candidate.origin ?? existing.origin,
+                    destination: candidate.destination ?? existing.destination,
+                    departureDate: candidate.departureDate ?? existing.departureDate,
+                    returnDate: candidate.returnDate ?? existing.returnDate
                 )
                 if updated != existing {
                     merged[existingIndex] = updated
@@ -115,6 +122,97 @@ final class SearchViewModel: ObservableObject {
         }
 
         return changedCount
+    }
+
+    func makeWatchlistRecheckPlan(maxRoutes: Int = 3) -> WatchlistRecheckPlan? {
+        guard maxRoutes > 0 else { return nil }
+
+        let descriptors = watchlist.compactMap(makeDescriptor(for:))
+        guard !descriptors.isEmpty else { return nil }
+
+        let preferred = descriptors.filter { $0.tripType == options.tripType }
+        let selectedTripType: TripType
+        let selectedPool: [WatchlistRouteDescriptor]
+        let skippedByTripType: Int
+
+        if !preferred.isEmpty {
+            selectedTripType = options.tripType
+            selectedPool = preferred.sorted { $0.lastSeenAt > $1.lastSeenAt }
+            skippedByTripType = descriptors.count - preferred.count
+        } else {
+            let sorted = descriptors.sorted { $0.lastSeenAt > $1.lastSeenAt }
+            guard let fallback = sorted.first else { return nil }
+            selectedTripType = fallback.tripType
+            selectedPool = sorted.filter { $0.tripType == selectedTripType }
+            skippedByTripType = 0
+        }
+
+        var seenRouteKeys: Set<String> = []
+        var uniqueRoutes: [RouteRequest] = []
+        var uniqueCount = 0
+
+        for descriptor in selectedPool {
+            if seenRouteKeys.insert(descriptor.identityKey).inserted {
+                uniqueCount += 1
+                if uniqueRoutes.count < maxRoutes {
+                    uniqueRoutes.append(descriptor.route)
+                }
+            }
+        }
+
+        guard !uniqueRoutes.isEmpty else { return nil }
+
+        return WatchlistRecheckPlan(
+            routes: uniqueRoutes,
+            tripType: selectedTripType,
+            skippedByTripType: skippedByTripType,
+            truncatedRoutes: max(0, uniqueCount - uniqueRoutes.count)
+        )
+    }
+
+    func runWatchlistRecheck() async {
+        guard !watchlist.isEmpty else {
+            watchlistRecheckSummary = "Watchlist is empty."
+            return
+        }
+
+        guard !isSearching else {
+            return
+        }
+
+        guard let plan = makeWatchlistRecheckPlan() else {
+            watchlistRecheckSummary = "No valid watchlist routes to re-check."
+            return
+        }
+
+        isSearching = true
+        searchError = nil
+        watchlistRecheckSummary = nil
+        progressByRoute = [:]
+
+        var recheckOptions = options
+        recheckOptions.tripType = plan.tripType
+
+        let request = SearchRequest(
+            routes: plan.routes,
+            options: recheckOptions,
+            enabledKinds: enabledKinds
+        )
+
+        do {
+            let result = try await coordinator.search(request: request) { [weak self] progress in
+                Task { @MainActor in
+                    self?.progressByRoute[progress.routeKey] = progress
+                }
+            }
+            processSessionResult(result)
+            watchlistRecheckSummary = buildWatchlistRecheckSummary(plan)
+        } catch {
+            searchError = error.localizedDescription
+            watchlistRecheckSummary = "Watchlist re-check failed."
+        }
+
+        isSearching = false
     }
 
     func processSessionResult(_ result: SearchSessionResult, observedAt: Date = Date()) {
@@ -150,6 +248,7 @@ final class SearchViewModel: ObservableObject {
     func runSearch() async {
         isSearching = true
         searchError = nil
+        watchlistRecheckSummary = nil
         progressByRoute = [:]
 
         let routeRequests = routes.map { $0.toRouteRequest(tripType: options.tripType) }
@@ -196,9 +295,9 @@ final class SearchViewModel: ObservableObject {
 
         for index in updatedWatchlist.indices {
             let candidate = updatedWatchlist[index]
-            let key = watchKey(routeKey: candidate.routeKey, providerID: candidate.providerID)
+            let matchingOffer = watchKeysForCandidate(candidate).compactMap { matchedOffers[$0] }.first
             guard
-                let offer = matchedOffers[key],
+                let offer = matchingOffer,
                 let price = offer.totalPrice
             else {
                 continue
@@ -215,7 +314,11 @@ final class SearchViewModel: ObservableObject {
                 currencyCode: offer.currencyCode,
                 observedPrice: roundedPrice,
                 targetPrice: candidate.targetPrice,
-                lastSeenAt: nextLastSeen
+                lastSeenAt: nextLastSeen,
+                origin: offer.route.origin,
+                destination: offer.route.destination,
+                departureDate: offer.route.departureDate,
+                returnDate: offer.route.returnDate
             )
 
             if refreshed != candidate {
@@ -259,12 +362,13 @@ final class SearchViewModel: ObservableObject {
                     continue
                 }
 
-                let key = watchKey(routeKey: routeResult.route.routeKey, providerID: offer.providerID)
-                if let existing = offersByKey[key], let existingPrice = existing.totalPrice, existingPrice <= price {
-                    continue
+                let keys = watchKeysForRoute(routeResult.route, providerID: offer.providerID)
+                for key in keys {
+                    if let existing = offersByKey[key], let existingPrice = existing.totalPrice, existingPrice <= price {
+                        continue
+                    }
+                    offersByKey[key] = offer
                 }
-
-                offersByKey[key] = offer
             }
         }
 
@@ -293,11 +397,69 @@ final class SearchViewModel: ObservableObject {
         }
     }
 
-    private func watchKey(routeKey: String, providerID: String) -> String {
+    private func watchLegacyKey(routeKey: String, providerID: String) -> String {
         "\(routeKey)|\(providerID)"
+    }
+
+    private func watchCanonicalKey(route: RouteRequest, providerID: String) -> String {
+        "\(routeIdentity(route))|\(providerID)"
+    }
+
+    private func watchKeysForRoute(_ route: RouteRequest, providerID: String) -> [String] {
+        [
+            watchLegacyKey(routeKey: route.routeKey, providerID: providerID),
+            watchCanonicalKey(route: route, providerID: providerID)
+        ]
+    }
+
+    private func watchKeysForCandidate(_ candidate: WatchCandidate) -> [String] {
+        var keys = [watchLegacyKey(routeKey: candidate.routeKey, providerID: candidate.providerID)]
+        if let route = candidate.toRouteRequest() {
+            keys.append(watchCanonicalKey(route: route, providerID: candidate.providerID))
+        }
+        return keys
+    }
+
+    private func routeIdentity(_ route: RouteRequest) -> String {
+        let departure = DateFormatter.flightDate.string(from: route.departureDate)
+        let returnValue = route.returnDate.map { DateFormatter.flightDate.string(from: $0) } ?? "oneway"
+        return "\(route.origin)-\(route.destination)-\(departure)-\(returnValue)"
+    }
+
+    private func makeDescriptor(for candidate: WatchCandidate) -> WatchlistRouteDescriptor? {
+        guard let route = candidate.toRouteRequest() else { return nil }
+        return WatchlistRouteDescriptor(
+            route: route,
+            tripType: route.returnDate == nil ? .oneWay : .roundTrip,
+            lastSeenAt: candidate.lastSeenAt,
+            identityKey: candidate.routeIdentityKey
+        )
+    }
+
+    private func buildWatchlistRecheckSummary(_ plan: WatchlistRecheckPlan) -> String {
+        var parts = [
+            "Rechecked \(plan.routes.count) watchlist route\(plan.routes.count == 1 ? "" : "s") as \(plan.tripType.rawValue.lowercased())."
+        ]
+
+        if plan.skippedByTripType > 0 {
+            parts.append("Skipped \(plan.skippedByTripType) route\(plan.skippedByTripType == 1 ? "" : "s") with a different trip type.")
+        }
+
+        if plan.truncatedRoutes > 0 {
+            parts.append("Deferred \(plan.truncatedRoutes) route\(plan.truncatedRoutes == 1 ? "" : "s") due to the 3-route cap.")
+        }
+
+        return parts.joined(separator: " ")
     }
 
     private func roundToTwo(_ value: Double) -> Double {
         (value * 100).rounded() / 100
     }
+}
+
+private struct WatchlistRouteDescriptor {
+    let route: RouteRequest
+    let tripType: TripType
+    let lastSeenAt: Date
+    let identityKey: String
 }

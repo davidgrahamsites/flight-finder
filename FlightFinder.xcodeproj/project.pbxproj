@@ -12,6 +12,7 @@
 		053FECC21C55EDA46212E6F5 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A55FF94DB0212A33DEF7BC /* SearchViewModel.swift */; };
 		076D01E187B18DAA3A64E97D /* PriceExtraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDABD52AA1D8ABE1979C0A27 /* PriceExtraction.swift */; };
 		1BD683A1995FEAA3A866082A /* FlightOffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB8910700A267C8BBC9B6C2A /* FlightOffer.swift */; };
+		3092155C9EE4F96900AE7711 /* WatchlistRecheckPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA04307E690399A3708BC83C /* WatchlistRecheckPlan.swift */; };
 		30C80358757208BEE1B5EBB0 /* RouteInputState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9F0BAB31D493C5F72EB0268 /* RouteInputState.swift */; };
 		3638A6BB206B5261547DA8A7 /* SearchPreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F1D0D5CFE18E0358EDEA62E /* SearchPreferencesStore.swift */; };
 		3640178168EEDB40C88FB8AB /* FlightFinderCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D043D48F79FDC773DA4FF663 /* FlightFinderCoreTests.swift */; };
@@ -109,6 +110,7 @@
 		EFE2A183E97951450421FF6E /* FlightFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlightFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F54DC38D413109A6639EDD5C /* CollectionChunking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionChunking.swift; sourceTree = "<group>"; };
 		F5AB86D49C9147A9AEF7DD32 /* ProviderDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderDescriptor.swift; sourceTree = "<group>"; };
+		FA04307E690399A3708BC83C /* WatchlistRecheckPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistRecheckPlan.swift; sourceTree = "<group>"; };
 		FB8910700A267C8BBC9B6C2A /* FlightOffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightOffer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -220,6 +222,7 @@
 				533599F79905E68020CBB39A /* TripType.swift */,
 				CAB47C98C181D47B56E48F3C /* WatchlistAlert.swift */,
 				8DA720F6960F7A801B7A61EB /* WatchlistCandidate.swift */,
+				FA04307E690399A3708BC83C /* WatchlistRecheckPlan.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -387,6 +390,7 @@
 				6DBF371D586CB0E7AA14B99D /* URLTemplateFlightProvider.swift in Sources */,
 				047BF005D0C3FD5435FE90E6 /* WatchlistAlert.swift in Sources */,
 				6644BE0740FAED4A4F5E2CCE /* WatchlistCandidate.swift in Sources */,
+				3092155C9EE4F96900AE7711 /* WatchlistRecheckPlan.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -469,7 +473,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -483,7 +487,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -550,7 +554,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -570,7 +574,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

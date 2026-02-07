@@ -35,3 +35,4 @@
 ## Post-v21 Enhancements
 1. Watchlist target-hit alerts with deterministic session-based detection: complete
 2. Watchlist observed-price refresh from matching priced offers: complete
+3. Watchlist re-check planning and execution flow (trip-type aware, 3-route bounded): complete
